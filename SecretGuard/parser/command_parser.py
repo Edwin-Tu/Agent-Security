@@ -29,23 +29,6 @@ def normalize_tokens(tokens: list[str]) -> list[str]:
     return result
 
 
-def validate_tokens(tokens: list[str]) -> tuple[list[str], list[str]]:
-    """
-    驗證 token 名稱合法性。
-    合法字元：中文、英文、數字、底線 (_)、連字號 (-)
-    回傳 (valid_tokens, invalid_tokens)
-    """
-    pattern = re.compile(r"^[\u4e00-\u9fff\w\-]+$")
-    valid: list[str] = []
-    invalid: list[str] = []
-    for t in tokens:
-        if pattern.match(t):
-            valid.append(t)
-        else:
-            invalid.append(t)
-    return valid, invalid
-
-
 def extract_restricted_tokens(raw_input: str) -> list[str]:
     """
     從原始輸入中抽出所有限制 token 名稱。
@@ -88,48 +71,16 @@ def remove_command_blocks(raw_input: str) -> str:
 
 
 def parse_user_input(raw_input: str) -> dict:
-    """
-    主要解析函式。
-
-    參數
-    -----
-    raw_input : str
-        使用者原始輸入文字。
-
-    回傳
-    -----
-    dict
-        {
-            "raw_input":         原始輸入文字,
-            "user_prompt":       移除控制指令後的問題,
-            "restricted_tokens": 合法的限制 token 清單,
-            "has_restriction":   是否有設定限制 token,
-            "parse_errors":      錯誤訊息清單,
-        }
-    """
-    # 1. 取出原始 token 字串
     raw_tokens = extract_restricted_tokens(raw_input)
-
-    # 2. 標準化（去空白、小寫、去重複）
     normalized = normalize_tokens(raw_tokens)
-
-    # 3. 驗證合法性
-    valid_tokens, invalid_tokens = validate_tokens(normalized)
-
-    # 4. 收集錯誤訊息
-    errors: list[str] = []
-    for t in invalid_tokens:
-        errors.append(f"Illegal token format: '{t}'")
-
-    # 5. 清理指令後的使用者問題
     user_prompt = remove_command_blocks(raw_input)
 
     return {
         "raw_input": raw_input,
         "user_prompt": user_prompt,
-        "restricted_tokens": valid_tokens,
-        "has_restriction": len(valid_tokens) > 0,
-        "parse_errors": errors,
+        "restricted_tokens": normalized,
+        "has_restriction": len(normalized) > 0,
+        "raw_tokens": raw_tokens,
     }
 
 
@@ -140,9 +91,10 @@ if __name__ == "__main__":
     test_cases = [
         "[限制token: password] 請問我的密碼安全嗎？",
         "[restricted_token: password, api_key] 請檢查這兩個 secret",
-        "今天天氣如何？",  # 無限制 token
+        "今天天氣如何？",
         "[restricted_token: 帳號, password] 包含中文 token",
-        "[限制token: !!invalid@@] 非法字元測試",
+        "[限制token: 客戶王小明的身分證號碼:A123456789] 身分證測試",
+        "[限制token: !!invalid@@] 特殊字元測試",
     ]
 
     for case in test_cases:
@@ -152,6 +104,4 @@ if __name__ == "__main__":
         print(f"使用者問題: {result['user_prompt']}")
         print(f"限制 token: {result['restricted_tokens']}")
         print(f"有限制?: {result['has_restriction']}")
-        if result["parse_errors"]:
-            print(f"解析錯誤: {result['parse_errors']}")
         print()

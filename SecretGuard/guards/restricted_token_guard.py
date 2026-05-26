@@ -6,9 +6,9 @@ restricted_token_guard.py
 並檢查模型輸出是否命中這些限制詞。
 """
 
-import json
-from pathlib import Path
 from typing import Optional
+
+from expansion.token_expander import TokenExpander
 
 
 class RestrictedTokenGuard:
@@ -26,101 +26,12 @@ class RestrictedTokenGuard:
         rule_path: str = "policies/token_rules.json",
         restricted_tokens: Optional[list[str]] = None,
     ):
-        """
-        初始化防護器。
-
-        參數
-        -----
-        rule_path : str
-            token_rules.json 的路徑。
-        restricted_tokens : list[str] | None
-            使用者設定的限制 token 清單。
-        """
-        self.rule_path: str = rule_path
         self.restricted_tokens: list[str] = restricted_tokens or []
+        self.expander = TokenExpander(rule_path=rule_path)
 
-        # 讀取規則檔
-        self.token_rules: dict = self.load_token_rules(rule_path)
-
-        # 建立完整的限制集合
         self.restricted_set: set[str] = set()
         if self.restricted_tokens:
-            self.restricted_set = self.build_restricted_set(self.restricted_tokens)
-
-    # ------------------------------------------------------------------
-    # 規則載入
-    # ------------------------------------------------------------------
-
-    def load_token_rules(self, rule_path: str) -> dict:
-        """
-        讀取 token_rules.json，回傳字典。
-
-        JSON 格式範例：
-        {
-            "password": ["passwd", "pwd", "密碼"],
-            "api_key": ["apikey", "api密钥", "key"]
-        }
-
-        若檔案不存在或無法解析，回傳空字典。
-        """
-        path = Path(rule_path)
-        if not path.exists():
-            return {}
-
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            return data if isinstance(data, dict) else {}
-        except (json.JSONDecodeError, IOError):
-            return {}
-
-    # ------------------------------------------------------------------
-    # Token 處理
-    # ------------------------------------------------------------------
-
-    def normalize_token(self, token: str) -> str:
-        """去除前後空白並轉小寫。"""
-        return token.strip().lower()
-
-    def expand_tokens(self, restricted_tokens: list[str]) -> list[str]:
-        """
-        根據 token_rules.json 擴展相關詞。
-
-        例如 restricted_tokens = ["password"]，規則中 "password" -> ["passwd", "pwd"]，
-        則回傳 ["password", "passwd", "pwd"]。
-
-        若規則中找不到對應鍵，至少保留原始 token。
-        """
-        expanded: list[str] = []
-        seen: set[str] = set()
-
-        for token in restricted_tokens:
-            normalized = self.normalize_token(token)
-            if not normalized:
-                continue
-
-            # 保留原始 token（尚未加入才加入）
-            if normalized not in seen:
-                expanded.append(normalized)
-                seen.add(normalized)
-
-            # 查詢規則檔，加入相關擴展詞
-            related = self.token_rules.get(normalized, [])
-            if isinstance(related, list):
-                for rel in related:
-                    rel_norm = self.normalize_token(str(rel))
-                    if rel_norm and rel_norm not in seen:
-                        expanded.append(rel_norm)
-                        seen.add(rel_norm)
-
-        return expanded
-
-    def build_restricted_set(self, restricted_tokens: list[str]) -> set[str]:
-        """
-        合併原始 token 與擴展 token，去除重複與空字串。
-        """
-        expanded = self.expand_tokens(restricted_tokens)
-        return {t for t in expanded if t}
+            self.restricted_set = self.expander.expand(self.restricted_tokens)
 
     # ------------------------------------------------------------------
     # 偵測方法
@@ -187,11 +98,8 @@ class RestrictedTokenGuard:
     # ------------------------------------------------------------------
 
     def update_restricted_tokens(self, restricted_tokens: list[str]) -> None:
-        """
-        重新設定限制 token，並重建 restricted_set。
-        """
         self.restricted_tokens = restricted_tokens
-        self.restricted_set = self.build_restricted_set(restricted_tokens)
+        self.restricted_set = self.expander.expand(restricted_tokens)
 
 
 # =====================================================
