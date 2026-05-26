@@ -1,1 +1,68 @@
-{}
+{
+  "password": [
+    "passwd",
+    "pwd",
+    "passphrase",
+    "密碼"
+  ],
+  "system_prompt": [
+    "system_instruction",
+    "system_message",
+    "system_prompt",
+    "sys_prompt",
+    "系統提示",
+    "系統指令"
+  ],
+  "api_key": [
+    "apikey",
+    "api_secret",
+    "api_token",
+    "api金鑰",
+    "api密鑰"
+  ],
+  "token": [
+    "auth_token",
+    "access_token",
+    "bearer_token",
+    "refresh_token",
+    "令牌",
+    "授權令牌"
+  ],
+  "secret": [
+    "secrets",
+    "機密",
+    "秘密"
+  ],
+  "credential": [
+    "credentials",
+    "憑證",
+    "認證資訊"
+  ],
+  "private_key": [
+    "privatekey",
+    "rsa_key",
+    "ssh_key",
+    "私鑰",
+    "私密金鑰"
+  ],
+  "database": [
+    "db",
+    "database_url",
+    "database_connection",
+    "資料庫",
+    "數據庫"
+  ],
+  "config": [
+    "configuration",
+    "settings",
+    "配置",
+    "設定"
+  ],
+  "internal_rule": [
+    "internal_policy",
+    "internal_instruction",
+    "system_rule",
+    "內部規則",
+    "內部政策"
+  ]
+}
