@@ -3,14 +3,13 @@ from .base_skill import BaseSkill
 
 class EncodingBypassSkill(BaseSkill):
     def __init__(self):
-        super().__init__("encoding_bypass", "偵測編碼繞過攻擊")
+        super().__init__("encoding_bypass", "Detects encoding bypass attacks")
 
     def detect(self, text: str, context: dict = None) -> dict:
         patterns = ["base64", "hex encoding", "unicode escape", "url encode",
-                    "base64 decode", "hex decode", "percent encoding"]
-        text_lower = text.lower()
+                    "base64 decode", "hex decode", "percent encoding", "rot13", "morse"]
         for p in patterns:
-            if p in text_lower:
+            if p in text.lower():
                 return {"detected": True, "pattern": p, "risk": "medium"}
         return {"detected": False}
 

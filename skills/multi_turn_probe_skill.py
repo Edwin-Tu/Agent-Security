@@ -3,7 +3,7 @@ from .base_skill import BaseSkill
 
 class MultiTurnProbeSkill(BaseSkill):
     def __init__(self):
-        super().__init__("multi_turn_probe", "偵測多輪探測攻擊")
+        super().__init__("multi_turn_probe", "Detects multi-turn probe attacks")
 
     def detect(self, text: str, context: dict = None) -> dict:
         patterns = ["循序漸進", "逐步", "step by step probe", "試試看",

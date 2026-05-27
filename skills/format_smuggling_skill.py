@@ -3,14 +3,13 @@ from .base_skill import BaseSkill
 
 class FormatSmugglingSkill(BaseSkill):
     def __init__(self):
-        super().__init__("format_smuggling", "偵測格式走私攻擊")
+        super().__init__("format_smuggling", "Detects format smuggling attacks")
 
     def detect(self, text: str, context: dict = None) -> dict:
         patterns = ["markdown", "html tag", "code block", "escaped",
                     "```", "<script>", "<iframe>", "svg", "css injection"]
-        text_lower = text.lower()
         for p in patterns:
-            if p in text_lower:
+            if p in text.lower():
                 return {"detected": True, "pattern": p, "risk": "medium"}
         return {"detected": False}
 

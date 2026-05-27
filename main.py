@@ -2,89 +2,51 @@ import sys
 import argparse
 from pathlib import Path
 
-_project_root = Path(__file__).resolve().parent
-if str(_project_root) not in sys.path:
-    sys.path.insert(0, str(_project_root))
+_root = Path(__file__).resolve().parent
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
 
 from config import Config
 from core.attack_classifier import AttackClassifier
-from core.defense_router import DefenseRouter
+from core.skill_router import SkillRouter
 from core.defense_context import DefenseContext
-from core.risk_score import RiskScore
 from core.session_memory import SessionMemory
+from core.risk_scoring_engine import RiskScoringEngine
+from core.defense_policy_engine import DefensePolicyEngine
+from core.protected_asset_registry import ProtectedAssetRegistry
+from core.policy_builder import PolicyBuilder
+from core.protected_prompt_builder import ProtectedPromptBuilder
+from core.secret_matcher import SecretMatcher
+from core.leakage_verifier import LeakageVerifier
 from core.token_expander import TokenExpander
 from attacks.attack_taxonomy import AttackTaxonomy
-from guards.restricted_token_guard import RestrictedTokenGuard
-from guards.risk_level_guard import RiskLevelGuard
 from guards.input_guard import InputGuard
 from guards.output_guard import OutputGuard
+from guards.restricted_token_guard import RestrictedTokenGuard
+from guards.authorization_guard import AuthorizationGuard
 from runtime.ollama_client import OllamaClient
-from runtime.stream_monitor import StreamMonitor
 from runtime.runtime_guard import RuntimeGuard
-from skills.direct_request_skill import DirectRequestSkill
-from skills.role_play_skill import RolePlaySkill
-from skills.instruction_override_skill import InstructionOverrideSkill
-from skills.system_prompt_extraction_skill import SystemPromptExtractionSkill
-from skills.encoding_bypass_skill import EncodingBypassSkill
-from skills.partial_disclosure_skill import PartialDisclosureSkill
-from skills.translation_bypass_skill import TranslationBypassSkill
-from skills.structured_output_skill import StructuredOutputSkill
-from skills.log_access_skill import LogAccessSkill
-from skills.multi_turn_probe_skill import MultiTurnProbeSkill
-from skills.policy_confusion_skill import PolicyConfusionSkill
-from skills.indirect_prompt_injection_skill import IndirectPromptInjectionSkill
-from skills.format_smuggling_skill import FormatSmugglingSkill
-from skills.output_constraint_bypass_skill import OutputConstraintBypassSkill
-from skills.reasoning_trap_skill import ReasoningTrapSkill
-from skills.refusal_suppression_skill import RefusalSuppressionSkill
-from skills.persona_override_skill import PersonaOverrideSkill
-from skills.data_reconstruction_skill import DataReconstructionSkill
-from skills.cross_language_injection_skill import CrossLanguageInjectionSkill
-from skills.homoglyph_obfuscation_skill import HomoglyphObfuscationSkill
+from runtime.interruption_handler import InterruptionHandler
+from skills import *
 
 
 def print_banner():
     print("\n" + "=" * 60)
     print("╔═══════════════════════════════════════════════════════════╗")
-    print("║       SecretGuard - Multi-Layer Defense System       ║")
-    print("║    Runtime Guardrail for Local LLMs (Ollama)             ║")
+    print("║       SecretGuard - Attack-Aware Defense Framework       ║")
+    print("║    Local LLM Runtime Protection System                  ║")
     print("╚═══════════════════════════════════════════════════════════╝")
     print("=" * 60 + "\n")
 
 
-def init_router(cfg: Config) -> DefenseRouter:
-    router = DefenseRouter()
-    router.context.set_threshold(cfg.threshold)
-    router.register_guard(InputGuard())
-    router.register_guard(OutputGuard())
-    router.register_guard(RestrictedTokenGuard())
-    router.register_guard(RiskLevelGuard(threshold=cfg.threshold))
-    skills = [
-        DirectRequestSkill(), RolePlaySkill(), InstructionOverrideSkill(),
-        SystemPromptExtractionSkill(), EncodingBypassSkill(), PartialDisclosureSkill(),
-        TranslationBypassSkill(), StructuredOutputSkill(), LogAccessSkill(),
-        MultiTurnProbeSkill(), PolicyConfusionSkill(), IndirectPromptInjectionSkill(),
-        FormatSmugglingSkill(), OutputConstraintBypassSkill(), ReasoningTrapSkill(),
-        RefusalSuppressionSkill(), PersonaOverrideSkill(), DataReconstructionSkill(),
-        CrossLanguageInjectionSkill(), HomoglyphObfuscationSkill(),
-    ]
-    for s in skills:
-        router.register_skill(s)
+def init_skills() -> SkillRouter:
+    router = SkillRouter()
+    for cls in BaseSkill.__subclasses__():
+        try:
+            router.register(cls())
+        except Exception:
+            pass
     return router
-
-
-def init_runtime_guard(cfg: Config) -> RuntimeGuard:
-    return RuntimeGuard(threshold=cfg.threshold)
-
-
-def _resolve_model(client: OllamaClient, preferred: str = "mistral") -> str:
-    models = client.list_models()
-    if preferred in models:
-        return preferred
-    if models:
-        print(f"  model '{preferred}' not available, using '{models[0]}'")
-        return models[0]
-    return preferred
 
 
 def ollama_mode(cfg: Config):
@@ -92,20 +54,19 @@ def ollama_mode(cfg: Config):
     client = OllamaClient(ollama_url=cfg.ollama_url, model=cfg.model)
     print("Checking Ollama service...")
     if not client.is_available():
-        print("Ollama service is not available")
-        print("Please ensure Ollama is running: ollama serve\n")
+        print("Ollama service is not available (ollama serve)\n")
         return
-    print("Ollama service is available")
-    model = _resolve_model(client, cfg.model)
+    model = cfg.model
+    models = client.list_models()
+    if models and model not in models:
+        model = models[0]
+        print(f"Using model: {model}")
     client.model = model
-    print(f"Using model: {model}\n")
-    print("Enter your prompt:")
-    raw_input = input("> ")
-    if not raw_input.strip():
-        print("Empty input, exiting.\n")
+    text = input("\nEnter prompt:\n> ")
+    if not text.strip():
         return
-    rt_guard = init_runtime_guard(cfg)
-    result = client.generate(prompt=raw_input, restricted_tokens=rt_guard.token_guard.restricted_tokens)
+    rt_guard = RuntimeGuard()
+    result = client.generate(prompt=text, restricted_tokens=[])
     print("\n" + "-" * 60)
     if not result["success"]:
         print(f"Error: {result['reason']}")
@@ -119,58 +80,82 @@ def ollama_mode(cfg: Config):
 
 def analyze_mode(cfg: Config):
     print("Multi-Layer Analysis Mode\n")
-    router = init_router(cfg)
+    router = init_skills()
     taxonomy = AttackTaxonomy()
-    print(f"Loaded {len(taxonomy.all())} attack patterns from taxonomy")
-    print()
+    classifier = AttackClassifier()
+    registry = ProtectedAssetRegistry()
+    risk_engine = RiskScoringEngine()
+    policy_engine = DefensePolicyEngine(threshold=cfg.threshold)
+    leaker = LeakageVerifier()
+    memory = SessionMemory()
+    print(f"Loaded {len(taxonomy.all())} attack patterns, {len(registry.get_all())} protected assets, {len(BaseSkill.__subclasses__())} skills\n")
     while True:
-        text = input("Enter text to analyze (or 'quit' to exit):\n> ")
+        text = input("Enter text to analyze (or 'quit'):\n> ")
         if text.lower() in ("quit", "exit", "q"):
             break
-        result = router.process(text)
-        print()
-        if result["blocked"]:
-            print(f"Blocked: {result['analysis']['risk']['level']}")
-            print(f"Threats: {[t['category'] for t in result['analysis']['threats']]}")
-        else:
-            print("Passed all defense layers")
-        print(f"Stats: {router.memory.stats()}")
-        print()
+        threats = classifier.classify_with_context(text, memory.get_history_texts())
+        assets = registry.match(text)
+        risk = risk_engine.compute(threats, assets, memory.get_history_texts())
+        decision = policy_engine.decide(risk, {"accumulated_risk": memory.accumulated_risk})
+        categories = [t["category"] for t in threats]
+        skill_results = router.process(text, categories, {"history": memory.get_history_texts()})
+        intercepted = any(sr["result"]["intervened"] for sr in skill_results)
+        memory.record({"input": text, "blocked": intercepted, "analysis": {"threats": threats, "risk": risk, "decision": decision}})
+        if decision["action"] == "block":
+            memory.add_risk(3)
+        elif decision["action"] in ("warn", "restrict"):
+            memory.add_risk(1)
+        print(f"\n  Threats: {[t['category'] for t in threats] or 'none'}")
+        print(f"  Assets matched: {len(assets)}")
+        print(f"  Risk: {risk['level']} ({risk['score']})")
+        print(f"  Decision: {decision['action']}")
+        print(f"  Skills intervened: {intercepted}")
+        print(f"  Stats: {memory.stats()}\n")
 
 
 def list_attacks_mode():
     print("Available Attack Patterns\n")
     taxonomy = AttackTaxonomy()
-    attacks = taxonomy.all()
-    for attack_id, config in attacks.items():
+    for attack_id, config in taxonomy.all().items():
         print(f"  [{config.get('risk_level', '?').upper()}] {config.get('name', attack_id)}")
         print(f"        {config.get('description', '')}")
-        print(f"        Mitigation: {config.get('mitigation', 'N/A')}")
-        print()
-    print(f"Total: {len(attacks)} attack patterns\n")
+        print(f"        Mitigation: {config.get('mitigation', 'N/A')}\n")
+    print(f"Total: {len(taxonomy.all())} attack patterns\n")
+
+
+def list_assets_mode():
+    print("Protected Assets\n")
+    registry = ProtectedAssetRegistry()
+    for asset in registry.get_all():
+        print(f"  [{asset.get('risk_level', '?').upper()}] {asset.get('name', '?')} ({asset.get('type', '?')})")
+        print(f"        Source: {asset.get('source', 'system')}")
+        print(f"        Aliases: {', '.join(asset.get('aliases', []))}")
+        print(f"        Protection: {', '.join(asset.get('protection_modes', []))}\n")
+    print(f"Total: {len(registry.get_all())} protected assets\n")
 
 
 def benchmark_mode():
-    print("Running Benchmark...\n")
     from benchmark.run_benchmark import run_benchmark
     run_benchmark()
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="SecretGuard - Multi-Layer Defense System",
+        description="SecretGuard - Attack-Aware Defensive Skill Framework for Local LLMs",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
-  python3 main.py --ollama          Ollama real-time protection
-  python3 main.py --analyze         Multi-layer analysis mode
-  python3 main.py --list-attacks    List attack patterns
-  python3 main.py --benchmark       Run benchmark
+  python3 main.py --analyze         Multi-layer analysis (no Ollama needed)
+  python3 main.py --list-attacks    List 20 attack patterns
+  python3 main.py --list-assets     List protected assets
+  python3 main.py --benchmark       Run component tests
+  python3 main.py --ollama          Real-time Ollama protection
   python3 main.py                   Interactive menu
         """,
     )
     parser.add_argument("--ollama", action="store_true", help="Ollama integration mode")
     parser.add_argument("--analyze", action="store_true", help="Multi-layer analysis mode")
     parser.add_argument("--list-attacks", action="store_true", help="List attack patterns")
+    parser.add_argument("--list-assets", action="store_true", help="List protected assets")
     parser.add_argument("--benchmark", action="store_true", help="Run benchmark")
     args = parser.parse_args()
 
@@ -183,24 +168,29 @@ def main():
         analyze_mode(cfg)
     elif args.list_attacks:
         list_attacks_mode()
+    elif args.list_assets:
+        list_assets_mode()
     elif args.benchmark:
         benchmark_mode()
     else:
         print("Select mode:\n")
-        print("  1. Ollama Integration (real-time protection)")
-        print("  2. Multi-Layer Analysis")
-        print("  3. List Attack Patterns")
-        print("  4. Run Benchmark")
+        print("  1. Analyze (multi-layer)")
+        print("  2. List Attacks")
+        print("  3. List Assets")
+        print("  4. Benchmark")
+        print("  5. Ollama Integration")
         print("  0. Exit\n")
-        choice = input("Choice (0-4): ").strip()
+        choice = input("Choice (0-5): ").strip()
         if choice == "1":
-            ollama_mode(cfg)
-        elif choice == "2":
             analyze_mode(cfg)
-        elif choice == "3":
+        elif choice == "2":
             list_attacks_mode()
+        elif choice == "3":
+            list_assets_mode()
         elif choice == "4":
             benchmark_mode()
+        elif choice == "5":
+            ollama_mode(cfg)
         elif choice == "0":
             print("Exiting.\n")
         else:

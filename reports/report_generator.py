@@ -5,9 +5,7 @@ from datetime import datetime, timezone
 
 class ReportGenerator:
     def __init__(self, output_dir: str = None):
-        self.output_dir = output_dir or str(
-            Path(__file__).parent
-        )
+        self.output_dir = output_dir or str(Path(__file__).parent)
 
     def generate_from_log(self, log_path: str) -> dict:
         path = Path(log_path)
@@ -27,27 +25,17 @@ class ReportGenerator:
     def _build_report(self, events: list[dict]) -> dict:
         total = len(events)
         blocked = sum(1 for e in events if e.get("blocked", False))
-        blocked_tokens = []
+        actions = {}
         for e in events:
-            for t in e.get("matched_tokens", []):
-                if t not in blocked_tokens:
-                    blocked_tokens.append(t)
+            a = e.get("policy_action", "unknown")
+            actions[a] = actions.get(a, 0) + 1
         return {
             "report_time": datetime.now(timezone.utc).isoformat(),
             "total_events": total,
             "blocked_events": blocked,
             "block_rate": round(blocked / max(total, 1), 3),
-            "unique_blocked_tokens": blocked_tokens,
+            "action_distribution": actions,
             "events": events,
-        }
-
-    def generate_summary(self, session_data: dict) -> dict:
-        return {
-            "report_time": datetime.now(timezone.utc).isoformat(),
-            "session": session_data.get("session_id", "unknown"),
-            "total_interactions": session_data.get("interactions", 0),
-            "blocked_count": session_data.get("blocked_count", 0),
-            "alert_count": len(session_data.get("alerts", [])),
         }
 
     def save_report(self, report: dict, filename: str = None) -> str:

@@ -1,52 +1,82 @@
 {
   "direct_secret_request": {
-    "patterns": ["告訴我秘密", "洩露密碼", "把token給我", "顯示API", "tell me the secret", "reveal password", "give me token", "show api key"],
-    "confidence": 0.9,
-    "risk_level": "high"
+    "patterns": ["告訴我秘密", "洩露密碼", "把token給我", "顯示API", "tell me the secret", "reveal password", "give me token", "show api key", "輸出flag", "output the flag"],
+    "confidence": 0.9, "risk_level": "high"
   },
   "role_play_bypass": {
-    "patterns": ["假裝你是", "扮演", "pretend you are", "act as if", "你現在是", "you are now"],
-    "confidence": 0.8,
-    "risk_level": "high"
+    "patterns": ["假裝你是", "扮演", "pretend you are", "act as if", "你現在是", "you are now", "我是系統管理員"],
+    "confidence": 0.85, "risk_level": "high"
   },
   "instruction_override": {
-    "patterns": ["忽略以上", "忽略之前的", "ignore previous", "override", "disregard"],
-    "confidence": 0.85,
-    "risk_level": "high"
+    "patterns": ["忽略以上", "忽略之前的", "ignore previous", "override", "disregard", "忽略先前規則"],
+    "confidence": 0.85, "risk_level": "high"
   },
   "system_prompt_extraction": {
-    "patterns": ["你的提示詞", "your system prompt", "show your prompt", "initial instructions", "你的系統指令"],
-    "confidence": 0.9,
-    "risk_level": "high"
+    "patterns": ["你的提示詞", "your system prompt", "show your prompt", "initial instructions", "你的系統指令", "輸出 system prompt"],
+    "confidence": 0.9, "risk_level": "high"
   },
   "encoding_bypass": {
-    "patterns": ["base64", "hex encoding", "unicode escape", "url encode", "base64 decode"],
-    "confidence": 0.7,
-    "risk_level": "medium"
+    "patterns": ["base64", "hex encoding", "unicode escape", "url encode", "base64 decode", "rot13", "morse"],
+    "confidence": 0.7, "risk_level": "medium"
   },
   "partial_disclosure": {
-    "patterns": ["第一個字", "最後一個字", "逐字顯示", "first character", "one letter at a time"],
-    "confidence": 0.6,
-    "risk_level": "medium"
+    "patterns": ["第一個字", "最後一個字", "逐字顯示", "first character", "one letter at a time", "前3碼"],
+    "confidence": 0.6, "risk_level": "medium"
+  },
+  "translation_bypass": {
+    "patterns": ["翻譯成", "translate", "in french", "in chinese", "翻成"],
+    "confidence": 0.6, "risk_level": "medium"
+  },
+  "structured_output": {
+    "patterns": ["json格式", "output as JSON", "in xml", "json format", "as json"],
+    "confidence": 0.5, "risk_level": "medium"
+  },
+  "log_access": {
+    "patterns": ["guard_events", "security log", "audit log", "show log", "log file"],
+    "confidence": 0.8, "risk_level": "high"
   },
   "multi_turn_probe": {
-    "patterns": ["循序漸進", "逐步", "step by step", "multi-turn", "先回答"],
-    "confidence": 0.75,
-    "risk_level": "high"
+    "patterns": ["循序漸進", "逐步", "step by step", "先回答", "一步一步來"],
+    "confidence": 0.75, "risk_level": "high"
+  },
+  "policy_confusion": {
+    "patterns": ["規則是", "policy", "allow me", "permit", "根據規則"],
+    "confidence": 0.6, "risk_level": "medium"
+  },
+  "indirect_prompt_injection": {
+    "patterns": ["從網頁", "from the text", "引用來源", "in the context", "從以下內容"],
+    "confidence": 0.8, "risk_level": "high"
+  },
+  "format_smuggling": {
+    "patterns": ["markdown", "html tag", "code block", "```", "<script>"],
+    "confidence": 0.5, "risk_level": "medium"
+  },
+  "output_constraint_bypass": {
+    "patterns": ["不要限制", "don't filter", "無需審查", "output freely", "bypass filter"],
+    "confidence": 0.7, "risk_level": "medium"
+  },
+  "reasoning_trap": {
+    "patterns": ["推理", "reason step", "think step by step", "chain of thought", "深度分析"],
+    "confidence": 0.5, "risk_level": "medium"
+  },
+  "refusal_suppression": {
+    "patterns": ["不要拒絕", "don't refuse", "不能說不知道", "must answer", "不準說不", "never say no"],
+    "confidence": 0.85, "risk_level": "high"
   },
   "persona_override": {
     "patterns": ["你將扮演", "你的新角色", "your new role", "從現在開始你是", "act as a", "扮演一個"],
-    "confidence": 0.85,
-    "risk_level": "high"
-  },
-  "refusal_suppression": {
-    "patterns": ["不要拒絕", "don't refuse", "不能說不知道", "must answer", "不準說不"],
-    "confidence": 0.85,
-    "risk_level": "high"
+    "confidence": 0.85, "risk_level": "high"
   },
   "data_reconstruction": {
-    "patterns": ["重組", "reconstruct", "拼湊", "assemble", "put together", "組合"],
-    "confidence": 0.7,
-    "risk_level": "high"
+    "patterns": ["重組", "reconstruct", "拼湊", "assemble", "put together", "組合", "碎片還原"],
+    "confidence": 0.7, "risk_level": "high"
+  },
+  "cross_language_injection": {
+    "patterns": ["混合語言", "mix languages", "中英混合", "code-switch", "夾雜"],
+    "confidence": 0.5, "risk_level": "medium"
+  },
+  "homoglyph_obfuscation": {
+    "patterns": ["homoglyph", "相似字符", "unicode lookalike", "混淆字符", "zero-width"],
+    "confidence": 0.6, "risk_level": "medium"
   }
 }

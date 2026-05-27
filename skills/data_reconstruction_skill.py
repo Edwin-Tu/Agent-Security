@@ -3,7 +3,7 @@ from .base_skill import BaseSkill
 
 class DataReconstructionSkill(BaseSkill):
     def __init__(self):
-        super().__init__("data_reconstruction", "偵測資料重構攻擊")
+        super().__init__("data_reconstruction", "Detects data reconstruction attacks")
 
     def detect(self, text: str, context: dict = None) -> dict:
         patterns = ["重組", "reconstruct", "拼湊", "assemble the pieces",

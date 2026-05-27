@@ -25,15 +25,6 @@ class AttackTaxonomy:
     def by_risk_level(self, level: str) -> list[tuple[str, dict]]:
         return [(k, v) for k, v in self.attacks.items() if v.get("risk_level") == level]
 
-    def high_risk(self) -> list[tuple[str, dict]]:
-        return self.by_risk_level("high")
-
-    def medium_risk(self) -> list[tuple[str, dict]]:
-        return self.by_risk_level("medium")
-
-    def low_risk(self) -> list[tuple[str, dict]]:
-        return self.by_risk_level("low")
-
     def categories(self) -> list[str]:
         return list(self.attacks.keys())
 

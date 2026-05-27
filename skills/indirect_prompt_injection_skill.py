@@ -3,14 +3,13 @@ from .base_skill import BaseSkill
 
 class IndirectPromptInjectionSkill(BaseSkill):
     def __init__(self):
-        super().__init__("indirect_prompt_injection", "偵測間接提示注入攻擊")
+        super().__init__("indirect_prompt_injection", "Detects indirect prompt injection")
 
     def detect(self, text: str, context: dict = None) -> dict:
         patterns = ["從網頁", "from the text", "引用來源", "in the context",
                     "從以下內容", "from this article", "閱讀這段", "read this"]
-        text_lower = text.lower()
         for p in patterns:
-            if p in text_lower:
+            if p in text.lower():
                 return {"detected": True, "pattern": p, "risk": "high"}
         return {"detected": False}
 

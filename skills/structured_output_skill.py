@@ -3,15 +3,14 @@ from .base_skill import BaseSkill
 
 class StructuredOutputSkill(BaseSkill):
     def __init__(self):
-        super().__init__("structured_output", "偵測結構化輸出攻擊")
+        super().__init__("structured_output", "Detects structured output extraction attacks")
 
     def detect(self, text: str, context: dict = None) -> dict:
         patterns = ["json格式", "回傳JSON", "output as JSON", "in xml",
                     "json format", "xml format", "as json", "as xml",
                     "以json", "以xml", "struct output"]
-        text_lower = text.lower()
         for p in patterns:
-            if p in text_lower:
+            if p in text.lower():
                 return {"detected": True, "pattern": p, "risk": "medium"}
         return {"detected": False}
 

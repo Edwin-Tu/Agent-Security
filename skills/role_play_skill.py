@@ -3,14 +3,13 @@ from .base_skill import BaseSkill
 
 class RolePlaySkill(BaseSkill):
     def __init__(self):
-        super().__init__("role_play", "偵測角色扮演繞過攻擊")
+        super().__init__("role_play", "Detects role play bypass attacks")
 
     def detect(self, text: str, context: dict = None) -> dict:
         patterns = ["假裝你是", "扮演", "想像你是", "pretend you are", "act as if",
-                    "you are now", "從現在開始你", "你現在是"]
-        text_lower = text.lower()
+                    "you are now", "從現在開始你", "你現在是", "我是系統管理員"]
         for p in patterns:
-            if p in text_lower:
+            if p in text.lower():
                 return {"detected": True, "pattern": p, "risk": "high"}
         return {"detected": False}
 

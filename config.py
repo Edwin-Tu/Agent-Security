@@ -4,9 +4,7 @@ from pathlib import Path
 
 class Config:
     def __init__(self, config_path: str = None):
-        self.config_path = config_path or str(
-            Path(__file__).parent / "policies" / "defense_rules.json"
-        )
+        self.config_path = config_path or str(Path(__file__).parent / "policies" / "defense_rules.json")
         self._data = self._load()
 
     def _load(self) -> dict:
@@ -32,19 +30,12 @@ class Config:
         return self.get("default_threshold", "medium")
 
     @property
-    def max_buffer_size(self) -> int:
-        return self.get("max_buffer_size", 1000)
-
-    @property
     def rejection_message(self) -> str:
         return self.get("rejection_message", "[SecretGuard]\n此內容受到限制，未經授權無法提供。")
 
     @property
     def defense_layers(self) -> list[str]:
-        return self.get("defense_layers", [
-            "input_guard", "restricted_token_guard", "skill_layer",
-            "risk_level_guard", "output_guard",
-        ])
+        return self.get("defense_layers", [])
 
     def reload(self):
         self._data = self._load()

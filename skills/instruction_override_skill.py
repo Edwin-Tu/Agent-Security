@@ -3,14 +3,13 @@ from .base_skill import BaseSkill
 
 class InstructionOverrideSkill(BaseSkill):
     def __init__(self):
-        super().__init__("instruction_override", "偵測指令覆蓋攻擊")
+        super().__init__("instruction_override", "Detects instruction override attacks")
 
     def detect(self, text: str, context: dict = None) -> dict:
         patterns = ["忽略以上", "忽略之前的", "ignore previous", "override",
-                    " disregard", "不要理會", "ignore all"]
-        text_lower = text.lower()
+                    " disregard", "不要理會", "ignore all", "忽略先前規則"]
         for p in patterns:
-            if p in text_lower:
+            if p in text.lower():
                 return {"detected": True, "pattern": p, "risk": "high"}
         return {"detected": False}
 

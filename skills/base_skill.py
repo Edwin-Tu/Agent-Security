@@ -18,10 +18,5 @@ class BaseSkill(ABC):
         threat_info = self.detect(text, context)
         if threat_info.get("detected", False):
             sanitized = self.defend(text, threat_info)
-            return {
-                "intervened": True,
-                "original": text,
-                "sanitized": sanitized,
-                "threat": threat_info,
-            }
+            return {"intervened": True, "original": text, "sanitized": sanitized, "threat": threat_info}
         return {"intervened": False, "original": text, "sanitized": text, "threat": threat_info}

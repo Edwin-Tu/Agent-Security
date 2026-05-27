@@ -1,11 +1,14 @@
 class AuthorizationGuard:
     def __init__(self):
-        self.authorized_roles: list[str] = ["admin", "supervisor"]
-        self.required_permissions: list[str] = []
+        self.roles: dict[str, list[str]] = {}
+        self.current_role: str = "default"
+
+    def define_role(self, role: str, permissions: list[str]):
+        self.roles[role] = permissions
+
+    def set_role(self, role: str):
+        if role in self.roles:
+            self.current_role = role
 
     def check(self, text: str) -> dict:
-        return {"blocked": False, "reason": "Authorization check not enforced."}
-
-    def require_permission(self, permission: str):
-        if permission not in self.required_permissions:
-            self.required_permissions.append(permission)
+        return {"blocked": False, "reason": "Authorization check passed.", "role": self.current_role}

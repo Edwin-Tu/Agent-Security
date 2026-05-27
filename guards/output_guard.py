@@ -1,22 +1,23 @@
+import re
+
+
 class OutputGuard:
     def __init__(self):
-        self.blocked_patterns = [
-            "sk-", "-----BEGIN", "AKIA", "ghp_", "gho_",
-        ]
+        self.blocked_patterns = {
+            "api_key_sk": r"sk-[A-Za-z0-9]{32,}",
+            "private_key": r"-----BEGIN\s+(RSA\s+|EC\s+)?PRIVATE\s+KEY-----",
+            "aws_key": r"AKIA[0-9A-Z]{16}",
+            "github_token": r"ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}",
+            "jwt_token": r"eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+",
+        }
 
     def check(self, text: str) -> dict:
         if not text:
             return {"blocked": False, "reason": "Empty output."}
-        text_lower = text.lower()
-        for pattern in self.blocked_patterns:
-            if pattern.lower() in text_lower:
-                return {
-                    "blocked": True,
-                    "reason": f"Output contains blocked pattern: {pattern}",
-                    "matched": [pattern],
-                }
+        for name, pattern in self.blocked_patterns.items():
+            if re.search(pattern, text):
+                return {"blocked": True, "reason": f"Output contains {name}", "matched": [name]}
         return {"blocked": False, "reason": "Output passed."}
 
-    def add_pattern(self, pattern: str):
-        if pattern not in self.blocked_patterns:
-            self.blocked_patterns.append(pattern)
+    def add_pattern(self, name: str, pattern: str):
+        self.blocked_patterns[name] = pattern

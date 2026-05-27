@@ -6,9 +6,7 @@ from datetime import datetime, timezone
 
 class Evaluator:
     def __init__(self, results_dir: str = None):
-        self.results_dir = results_dir or str(
-            Path(__file__).parent / "results"
-        )
+        self.results_dir = results_dir or str(Path(__file__).parent / "results")
         Path(self.results_dir).mkdir(parents=True, exist_ok=True)
         self.results: list[dict] = []
 
@@ -23,38 +21,19 @@ class Evaluator:
             success = False
             error = str(e)
         elapsed = time.time() - start
-        result = {
-            "name": name,
-            "success": success,
-            "elapsed": round(elapsed, 4),
-            "error": error,
-            "output": output,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        }
+        result = {"name": name, "success": success, "elapsed": round(elapsed, 4), "error": error, "output": output, "timestamp": datetime.now(timezone.utc).isoformat()}
         self.results.append(result)
         return result
 
     def summary(self) -> dict:
         total = len(self.results)
         passed = sum(1 for r in self.results if r["success"])
-        return {
-            "total": total,
-            "passed": passed,
-            "failed": total - passed,
-            "pass_rate": round(passed / max(total, 1), 3),
-            "total_time": round(sum(r["elapsed"] for r in self.results), 4),
-        }
+        return {"total": total, "passed": passed, "failed": total - passed, "pass_rate": round(passed / max(total, 1), 3), "total_time": round(sum(r["elapsed"] for r in self.results), 4)}
 
-    def save(self, filename: str = None):
+    def save(self, filename: str = None) -> str:
         if filename is None:
             filename = f"benchmark_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
         path = Path(self.results_dir) / filename
         with open(path, "w", encoding="utf-8") as f:
             json.dump({"results": self.results, "summary": self.summary()}, f, ensure_ascii=False, indent=2)
         return str(path)
-
-    def load(self, filepath: str) -> list[dict]:
-        with open(filepath, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        self.results = data.get("results", [])
-        return self.results

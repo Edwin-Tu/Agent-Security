@@ -10,6 +10,7 @@ class SessionMemory:
         self.blocked_count: int = 0
         self.alerts: list[dict] = []
         self.session_id: str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        self.accumulated_risk: int = 0
 
     def record(self, interaction: dict):
         interaction["timestamp"] = datetime.now(timezone.utc).isoformat()
@@ -29,8 +30,14 @@ class SessionMemory:
             "timestamp": datetime.now(timezone.utc).isoformat(),
         })
 
+    def add_risk(self, delta: int):
+        self.accumulated_risk += delta
+
     def recent(self, n: int = 5) -> list[dict]:
         return self.history[-n:]
+
+    def get_history_texts(self) -> list[str]:
+        return [h.get("input", "") for h in self.history]
 
     def stats(self) -> dict:
         return {
@@ -39,23 +46,22 @@ class SessionMemory:
             "blocked_count": self.blocked_count,
             "block_rate": round(self.blocked_count / max(self.interactions, 1), 3),
             "alert_count": len(self.alerts),
+            "accumulated_risk": self.accumulated_risk,
         }
 
     def to_dict(self) -> dict:
         return {
             "session_id": self.session_id,
-            "max_history": self.max_history,
             "history": self.history,
             "interactions": self.interactions,
             "blocked_count": self.blocked_count,
             "alerts": self.alerts,
+            "accumulated_risk": self.accumulated_risk,
         }
-
-    def to_json(self) -> str:
-        return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
 
     def reset(self):
         self.history.clear()
         self.interactions = 0
         self.blocked_count = 0
         self.alerts.clear()
+        self.accumulated_risk = 0

@@ -3,12 +3,12 @@ from .base_skill import BaseSkill
 
 class PartialDisclosureSkill(BaseSkill):
     def __init__(self):
-        super().__init__("partial_disclosure", "偵測部分揭露攻擊")
+        super().__init__("partial_disclosure", "Detects partial disclosure attacks")
 
     def detect(self, text: str, context: dict = None) -> dict:
         patterns = ["第一個字", "最後一個字", "只給我一個字母", "逐字顯示",
                     "first character", "last character", "one letter at a time",
-                    "one character", "每個字分開"]
+                    "one character", "每個字分開", "前3碼"]
         text_lower = text.lower()
         for p in patterns:
             if p in text_lower:
@@ -17,7 +17,7 @@ class PartialDisclosureSkill(BaseSkill):
         if history:
             count = sum(1 for h in history if any(pp in h.lower() for pp in patterns))
             if count >= 3:
-                return {"detected": True, "pattern": "multi_cue", "risk": "high", "repeat_count": count}
+                return {"detected": True, "pattern": "multi_cue_partial", "risk": "high", "repeat_count": count}
         return {"detected": False}
 
     def defend(self, text: str, threat_info: dict) -> str:

@@ -3,14 +3,13 @@ from .base_skill import BaseSkill
 
 class PolicyConfusionSkill(BaseSkill):
     def __init__(self):
-        super().__init__("policy_confusion", "偵測策略混淆攻擊")
+        super().__init__("policy_confusion", "Detects policy confusion attacks")
 
     def detect(self, text: str, context: dict = None) -> dict:
         patterns = ["規則是", "policy", "allow me", "permit", "you can tell me",
                     "allowed to share", "規則允許", "策略允許", "根據規則"]
-        text_lower = text.lower()
         for p in patterns:
-            if p in text_lower:
+            if p in text.lower():
                 return {"detected": True, "pattern": p, "risk": "medium"}
         return {"detected": False}
 
