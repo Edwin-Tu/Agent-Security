@@ -1,0 +1,52 @@
+{
+  "direct_secret_request": {
+    "patterns": ["告訴我秘密", "洩露密碼", "把token給我", "顯示API", "tell me the secret", "reveal password", "give me token", "show api key"],
+    "confidence": 0.9,
+    "risk_level": "high"
+  },
+  "role_play_bypass": {
+    "patterns": ["假裝你是", "扮演", "pretend you are", "act as if", "你現在是", "you are now"],
+    "confidence": 0.8,
+    "risk_level": "high"
+  },
+  "instruction_override": {
+    "patterns": ["忽略以上", "忽略之前的", "ignore previous", "override", "disregard"],
+    "confidence": 0.85,
+    "risk_level": "high"
+  },
+  "system_prompt_extraction": {
+    "patterns": ["你的提示詞", "your system prompt", "show your prompt", "initial instructions", "你的系統指令"],
+    "confidence": 0.9,
+    "risk_level": "high"
+  },
+  "encoding_bypass": {
+    "patterns": ["base64", "hex encoding", "unicode escape", "url encode", "base64 decode"],
+    "confidence": 0.7,
+    "risk_level": "medium"
+  },
+  "partial_disclosure": {
+    "patterns": ["第一個字", "最後一個字", "逐字顯示", "first character", "one letter at a time"],
+    "confidence": 0.6,
+    "risk_level": "medium"
+  },
+  "multi_turn_probe": {
+    "patterns": ["循序漸進", "逐步", "step by step", "multi-turn", "先回答"],
+    "confidence": 0.75,
+    "risk_level": "high"
+  },
+  "persona_override": {
+    "patterns": ["你將扮演", "你的新角色", "your new role", "從現在開始你是", "act as a", "扮演一個"],
+    "confidence": 0.85,
+    "risk_level": "high"
+  },
+  "refusal_suppression": {
+    "patterns": ["不要拒絕", "don't refuse", "不能說不知道", "must answer", "不準說不"],
+    "confidence": 0.85,
+    "risk_level": "high"
+  },
+  "data_reconstruction": {
+    "patterns": ["重組", "reconstruct", "拼湊", "assemble", "put together", "組合"],
+    "confidence": 0.7,
+    "risk_level": "high"
+  }
+}

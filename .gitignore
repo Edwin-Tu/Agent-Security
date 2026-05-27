@@ -1,0 +1,5 @@
+__pycache__/
+*.py[cod]
+benchmark/results/*.json
+reports/*.json
+logs/*.jsonl

@@ -1,0 +1,21 @@
+{
+  "default_threshold": "medium",
+  "max_allowed_risk": "high",
+  "enable_input_guard": true,
+  "enable_output_guard": true,
+  "enable_token_guard": true,
+  "enable_risk_guard": true,
+  "enable_authorization": false,
+  "stream_monitoring": true,
+  "log_all_events": true,
+  "max_buffer_size": 1000,
+  "response_language": "zh",
+  "rejection_message": "[SecretGuard]\n此內容受到限制，未經授權無法提供。",
+  "defense_layers": [
+    "input_guard",
+    "restricted_token_guard",
+    "skill_layer",
+    "risk_level_guard",
+    "output_guard"
+  ]
+}
