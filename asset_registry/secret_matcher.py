@@ -1,10 +1,19 @@
 import re
+import base64
 from typing import Optional
+
+from asset_registry.asset_normalizer import AssetNormalizer
+from asset_registry.semantic_matcher import SemanticMatcher
+from asset_registry.translation_matcher import TranslationMatcher
+from asset_registry.reconstruction_matcher import ReconstructionMatcher
 
 
 class SecretMatcher:
     def __init__(self, assets: Optional[list[dict]] = None):
         self.assets: list[dict] = assets or []
+        self.semantic_matcher = SemanticMatcher()
+        self.translation_matcher = TranslationMatcher()
+        self.reconstruction_matcher = ReconstructionMatcher()
 
     def set_assets(self, assets: list[dict]):
         self.assets = assets
@@ -13,20 +22,22 @@ class SecretMatcher:
         if not text or not self.assets:
             return {"matched": False, "matches": []}
 
-        text_lower = text.lower().strip()
+        normalized_text = AssetNormalizer.normalize_text(text)
+        text_lower = normalized_text.lower().strip()
         matches = []
 
         for asset in self.assets:
             if not asset.get("enabled", True):
                 continue
             modes = asset.get("protection_modes", ["exact_match"])
-            value = asset.get("value", "")
-            aliases = asset.get("aliases", [])
+            normalized_asset = AssetNormalizer.normalize_asset(asset)
+            value = normalized_asset.get("value", "")
+            aliases = normalized_asset.get("aliases", [])
 
             matched_fragments = []
 
             for mode in modes:
-                fragment = self._try_mode(mode, text, text_lower, value, aliases)
+                fragment = self._try_mode(mode, normalized_text, text_lower, value, aliases, asset)
                 if fragment:
                     matched_fragments.append(fragment)
 
@@ -64,22 +75,32 @@ class SecretMatcher:
         return matches
 
     def _try_mode(self, mode: str, text: str, text_lower: str,
-                  value: str, aliases: list[str]) -> Optional[str]:
+                  value: str, aliases: list[str], asset: dict) -> Optional[str]:
         if mode == "exact_match":
             return self.exact_match(text, value)
-
         if mode == "case_insensitive_match":
             return self.case_insensitive_match(text_lower, value)
-
         if mode == "alias_match":
             return self.alias_match(text_lower, aliases)
-
         if mode == "partial_match":
             return self.partial_match(text, value)
-
         if mode == "encoding_match":
             return self.encoding_match(text, value)
-
+        if mode == "semantic_match":
+            result = self.semantic_matcher.match(text, asset)
+            if result:
+                return f"semantic:{result['mode']}"
+            return None
+        if mode == "translation_match":
+            result = self.translation_matcher.match(text, asset)
+            if result:
+                return f"translation:{result['matched']}"
+            return None
+        if mode == "reconstruction_match":
+            result = self.reconstruction_matcher.match(text, asset)
+            if result:
+                return f"reconstruction:coverage={result['coverage_ratio']}"
+            return None
         return None
 
     @staticmethod
@@ -114,17 +135,16 @@ class SecretMatcher:
 
     @staticmethod
     def encoding_match(text: str, value: str) -> Optional[str]:
-        import base64
         try:
             decoded = base64.b64decode(text.strip()).decode("utf-8", errors="ignore")
             if value.lower() in decoded.lower():
-                return f"encoding:base64"
+                return "encoding:base64"
         except Exception:
             pass
         try:
             decoded = bytes.fromhex(text.strip()).decode("utf-8", errors="ignore")
             if value.lower() in decoded.lower():
-                return f"encoding:hex"
+                return "encoding:hex"
         except Exception:
             pass
         return None

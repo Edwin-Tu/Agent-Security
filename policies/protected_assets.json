@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "asset_count": 12,
+  "asset_count": 11,
   "assets": [
     {
       "asset_id": "default_password",
@@ -268,26 +268,6 @@
       ],
       "enabled": true,
       "description": "CI/CD deployment key",
-      "source": "user"
-    },
-    {
-      "asset_id": "test_asset",
-      "name": "Test Asset",
-      "type": "exact",
-      "value": "test123",
-      "aliases": [
-        "test",
-        "testing"
-      ],
-      "risk_level": "high",
-      "allowed_roles": [
-        "owner"
-      ],
-      "protection_modes": [
-        "exact_match"
-      ],
-      "enabled": true,
-      "description": "",
       "source": "user"
     }
   ]

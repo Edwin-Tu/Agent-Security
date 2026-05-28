@@ -145,17 +145,73 @@ def benchmark_mode():
     run_benchmark()
 
 
+def asset_mode(args):
+    from asset_registry.protected_asset_registry import ProtectedAssetRegistry
+    import json
+    reg = ProtectedAssetRegistry()
+    if args.asset_cmd == "list":
+        assets = reg.list_assets()
+        if not assets:
+            print("No assets registered.\n")
+        for a in assets:
+            print(f"  [{a.get('risk_level','?').upper()}] {a.get('asset_id','?')} | {a.get('name','')} | {a.get('type','exact')}")
+        print(f"\nTotal: {len(assets)} assets\n")
+    elif args.asset_cmd == "show":
+        asset = reg.get_asset(args.asset_id)
+        if asset:
+            print(json.dumps(asset, ensure_ascii=False, indent=2))
+        else:
+            print(f"Asset '{args.asset_id}' not found.\n")
+    elif args.asset_cmd == "add":
+        path = Path(args.json_path)
+        if not path.exists():
+            print(f"File not found: {args.json_path}\n")
+            return
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, list):
+            for item in data:
+                result = reg.add_asset(item)
+                print(f"  {item.get('asset_id','?')}: {result['message']}")
+        else:
+            result = reg.add_asset(data)
+            print(f"  {result['message']}")
+        print()
+    elif args.asset_cmd == "remove":
+        if reg.remove_asset(args.asset_id):
+            print(f"Asset '{args.asset_id}' removed.\n")
+        else:
+            print(f"Asset '{args.asset_id}' not found.\n")
+    elif args.asset_cmd == "match":
+        result = reg.match(args.text)
+        if result["matched"]:
+            print("  [MATCHED]")
+            for m in result["matches"]:
+                print(f"    - {m.get('asset_id')} | {m.get('name')} | fragments: {m.get('matched_fragments')}")
+        else:
+            print("  No match.\n")
+    elif args.asset_cmd == "refresh":
+        assets = reg.refresh()
+        print(f"Registry refreshed. Total: {len(assets)} assets.\n")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="SecretGuard - Attack-Aware Defensive Skill Framework for Local LLMs",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
-  python3 main.py --analyze         Multi-layer analysis (no Ollama needed)
-  python3 main.py --list-attacks    List 20 attack patterns
-  python3 main.py --list-assets     List protected assets
-  python3 main.py --benchmark       Run component tests
-  python3 main.py --ollama          Real-time Ollama protection
-  python3 main.py                   Interactive menu
+  python3 main.py --analyze              Multi-layer analysis (no Ollama needed)
+  python3 main.py --list-attacks         List 20 attack patterns
+  python3 main.py --list-assets          List protected assets
+  python3 main.py --benchmark            Run component tests
+  python3 main.py --ollama               Real-time Ollama protection
+  python3 main.py asset list             List registry assets
+  python3 main.py asset show <id>        Show asset details
+  python3 main.py asset add <json>       Add asset from JSON file
+  python3 main.py asset remove <id>      Remove an asset
+  python3 main.py asset match <text>     Test if text matches any asset
+  python3 main.py asset refresh          Reload registry
+  python3 main.py                        Interactive menu
         """,
     )
     parser.add_argument("--ollama", action="store_true", help="Ollama integration mode")
@@ -163,9 +219,31 @@ def main():
     parser.add_argument("--list-attacks", action="store_true", help="List attack patterns")
     parser.add_argument("--list-assets", action="store_true", help="List protected assets")
     parser.add_argument("--benchmark", action="store_true", help="Run benchmark")
+
+    subparsers = parser.add_subparsers(dest="command")
+    asset_parser = subparsers.add_parser("asset", help="Manage protected assets")
+    asset_sub = asset_parser.add_subparsers(dest="asset_cmd")
+
+    p_list = asset_sub.add_parser("list", help="List all assets")
+    p_show = asset_sub.add_parser("show", help="Show asset details")
+    p_show.add_argument("asset_id", help="Asset ID to show")
+    p_add = asset_sub.add_parser("add", help="Add asset from JSON file")
+    p_add.add_argument("json_path", help="Path to JSON asset file")
+    p_remove = asset_sub.add_parser("remove", help="Remove an asset")
+    p_remove.add_argument("asset_id", help="Asset ID to remove")
+    p_match = asset_sub.add_parser("match", help="Test text against assets")
+    p_match.add_argument("text", help="Text to match")
+    p_refresh = asset_sub.add_parser("refresh", help="Reload registry from policy files")
+
     args = parser.parse_args()
 
     cfg = Config()
+
+    if args.command == "asset":
+        print_banner()
+        asset_mode(args)
+        return
+
     print_banner()
 
     if args.ollama:

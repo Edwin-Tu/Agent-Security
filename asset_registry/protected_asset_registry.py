@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Optional
 
 from asset_registry.secret_matcher import SecretMatcher
+from asset_registry.asset_schema import AssetSchema
+from asset_registry.asset_normalizer import AssetNormalizer
 
 DEFAULT_POLICY_PATH = Path(__file__).resolve().parent.parent / "policies" / "default_secret_policy.json"
 USER_POLICY_PATH = Path(__file__).resolve().parent.parent / "policies" / "user_secret_policy.json"
@@ -103,11 +105,16 @@ class ProtectedAssetRegistry:
         matcher = SecretMatcher(self.assets)
         return matcher.match(text)
 
-    def add_asset(self, asset: dict) -> bool:
+    def add_asset(self, asset: dict) -> dict:
+        valid, msg = AssetSchema.validate_asset(asset)
+        if not valid:
+            return {"success": False, "message": msg}
+
+        asset = AssetNormalizer.normalize_asset(asset)
+
         if any(a.get("asset_id") == asset.get("asset_id") for a in self.assets):
-            return False
-        if "asset_id" not in asset or "value" not in asset:
-            return False
+            return {"success": False, "message": f"Duplicate asset_id: {asset['asset_id']}"}
+
         entry = {
             "asset_id": asset["asset_id"],
             "name": asset.get("name", ""),
@@ -122,12 +129,14 @@ class ProtectedAssetRegistry:
             "source": asset.get("source", "user"),
         }
         self.assets.append(entry)
-        return True
+        self.save_registry()
+        return {"success": True, "message": "Asset added", "asset_id": entry["asset_id"]}
 
     def remove_asset(self, asset_id: str) -> bool:
         for i, a in enumerate(self.assets):
             if a.get("asset_id") == asset_id:
                 self.assets.pop(i)
+                self.save_registry()
                 return True
         return False
 
@@ -148,6 +157,7 @@ class ProtectedAssetRegistry:
                 ):
                     if key in updates:
                         a[key] = updates[key]
+                self.save_registry()
                 return True
         return False
 

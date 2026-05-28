@@ -24,15 +24,3 @@ class AssetLoader:
             assets = AssetLoader.load_from_json(json_file)
             all_assets.extend(assets)
         return all_assets
-
-    @staticmethod
-    def validate_asset(asset: dict) -> tuple[bool, Optional[str]]:
-        if "asset_id" not in asset:
-            return False, "Missing asset_id"
-        if "value" not in asset:
-            return False, "Missing value"
-        if not isinstance(asset.get("aliases", []), list):
-            return False, "aliases must be a list"
-        if asset.get("risk_level") not in (None, "low", "medium", "high"):
-            return False, "risk_level must be low/medium/high"
-        return True, None
