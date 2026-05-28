@@ -1,8 +1,12 @@
 # Stage 04: Attack Classifier - Attack classification, taxonomy & pattern matching
 
-from .attack_classifier import AttackClassifier
+from .classifier import AttackClassifier
+from .result import AttackClassificationResult
+from .pattern_loader import PatternLoader
+from .scoring import ConfidenceScorer
 from .attack_taxonomy import AttackTaxonomy
 
 __all__ = [
-    "AttackClassifier", "AttackTaxonomy",
+    "AttackClassifier", "AttackClassificationResult",
+    "PatternLoader", "ConfidenceScorer", "AttackTaxonomy",
 ]

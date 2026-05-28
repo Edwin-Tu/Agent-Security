@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from attack_classifier.classifier import AttackClassifier as NewAttackClassifier
+
 
 class AttackClassifier:
     def __init__(self, attack_patterns_path: str = None):
