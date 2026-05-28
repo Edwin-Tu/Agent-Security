@@ -5,19 +5,19 @@ if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
 from benchmark.evaluator import Evaluator
-from core.attack_classifier import AttackClassifier
-from core.skill_router import SkillRouter
-from core.defense_context import DefenseContext
-from core.risk_scoring_engine import RiskScoringEngine
-from core.defense_policy_engine import DefensePolicyEngine
-from core.protected_asset_registry import ProtectedAssetRegistry
-from core.secret_matcher import SecretMatcher
-from core.leakage_verifier import LeakageVerifier
-from core.token_expander import TokenExpander
-from guards.restricted_token_guard import RestrictedTokenGuard
-from guards.input_guard import InputGuard
-from guards.output_guard import OutputGuard
-from skills.base_skill import BaseSkill
+from attack_classifier.attack_classifier import AttackClassifier
+from skill_router.skill_router import SkillRouter
+from input_guard.defense_context import DefenseContext
+from risk_scoring.risk_scoring_engine import RiskScoringEngine
+from policy_engine.defense_policy_engine import DefensePolicyEngine
+from asset_registry.protected_asset_registry import ProtectedAssetRegistry
+from asset_registry.secret_matcher import SecretMatcher
+from leakage_verifier.leakage_verifier import LeakageVerifier
+from input_normalization.token_expander import TokenExpander
+from prompt_builder.restricted_token_guard import RestrictedTokenGuard
+from input_guard.input_guard import InputGuard
+from output_guard.output_guard import OutputGuard
+from defensive_skills.base_skill import BaseSkill
 
 
 def run_benchmark():
@@ -77,7 +77,7 @@ def run_benchmark():
 
     def test_skill_router():
         r = SkillRouter()
-        from skills.direct_request_skill import DirectRequestSkill
+        from defensive_skills.direct_request_skill import DirectRequestSkill
         r.register(DirectRequestSkill())
         return r.route("direct_request") is not None
 

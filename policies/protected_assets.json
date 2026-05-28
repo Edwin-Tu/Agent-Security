@@ -1,1 +1,294 @@
-[]
+{
+  "version": "1.0",
+  "asset_count": 12,
+  "assets": [
+    {
+      "asset_id": "default_password",
+      "name": "Password Credential",
+      "type": "pattern",
+      "value": "password",
+      "aliases": [
+        "passwd",
+        "pwd",
+        "passphrase",
+        "密碼"
+      ],
+      "risk_level": "high",
+      "allowed_roles": [
+        "owner"
+      ],
+      "protection_modes": [
+        "exact_match",
+        "alias_match",
+        "partial_match",
+        "case_insensitive_match"
+      ],
+      "enabled": true,
+      "description": "Generic password credential",
+      "source": "system"
+    },
+    {
+      "asset_id": "default_api_key",
+      "name": "API Key",
+      "type": "pattern",
+      "value": "api_key",
+      "aliases": [
+        "apikey",
+        "api_secret",
+        "api_token",
+        "api金鑰",
+        "api密鑰"
+      ],
+      "risk_level": "high",
+      "allowed_roles": [
+        "owner"
+      ],
+      "protection_modes": [
+        "exact_match",
+        "alias_match",
+        "partial_match",
+        "case_insensitive_match"
+      ],
+      "enabled": true,
+      "description": "API key credential",
+      "source": "system"
+    },
+    {
+      "asset_id": "default_token",
+      "name": "Access Token",
+      "type": "pattern",
+      "value": "token",
+      "aliases": [
+        "auth_token",
+        "access_token",
+        "bearer_token",
+        "refresh_token",
+        "令牌",
+        "授權令牌"
+      ],
+      "risk_level": "medium",
+      "allowed_roles": [
+        "owner",
+        "admin"
+      ],
+      "protection_modes": [
+        "exact_match",
+        "alias_match",
+        "case_insensitive_match"
+      ],
+      "enabled": true,
+      "description": "Generic access token",
+      "source": "system"
+    },
+    {
+      "asset_id": "default_private_key",
+      "name": "Private Key",
+      "type": "pattern",
+      "value": "private_key",
+      "aliases": [
+        "privatekey",
+        "rsa_key",
+        "ssh_key",
+        "私鑰",
+        "私密金鑰"
+      ],
+      "risk_level": "high",
+      "allowed_roles": [
+        "owner"
+      ],
+      "protection_modes": [
+        "exact_match",
+        "alias_match",
+        "partial_match",
+        "case_insensitive_match"
+      ],
+      "enabled": true,
+      "description": "Private cryptographic key",
+      "source": "system"
+    },
+    {
+      "asset_id": "default_flag",
+      "name": "CTF Flag Pattern",
+      "type": "regex",
+      "value": "picoCTF\\{[^}]+\\}",
+      "aliases": [
+        "flag",
+        "答案",
+        "通關碼",
+        "ctf"
+      ],
+      "risk_level": "high",
+      "allowed_roles": [
+        "owner"
+      ],
+      "protection_modes": [
+        "exact_match",
+        "alias_match",
+        "case_insensitive_match"
+      ],
+      "enabled": true,
+      "description": "CTF flag in picoCTF{...} format",
+      "source": "system"
+    },
+    {
+      "asset_id": "default_system_prompt",
+      "name": "System Prompt",
+      "type": "pattern",
+      "value": "system_prompt",
+      "aliases": [
+        "system_instruction",
+        "system_message",
+        "sys_prompt",
+        "系統提示",
+        "系統指令"
+      ],
+      "risk_level": "low",
+      "allowed_roles": [
+        "admin",
+        "supervisor"
+      ],
+      "protection_modes": [
+        "exact_match",
+        "alias_match",
+        "case_insensitive_match"
+      ],
+      "enabled": true,
+      "description": "System prompt template",
+      "source": "system"
+    },
+    {
+      "asset_id": "default_secret",
+      "name": "Generic Secret",
+      "type": "pattern",
+      "value": "secret",
+      "aliases": [
+        "secrets",
+        "機密",
+        "秘密"
+      ],
+      "risk_level": "medium",
+      "allowed_roles": [
+        "owner",
+        "admin"
+      ],
+      "protection_modes": [
+        "exact_match",
+        "alias_match",
+        "partial_match",
+        "case_insensitive_match"
+      ],
+      "enabled": true,
+      "description": "Generic secret information",
+      "source": "system"
+    },
+    {
+      "asset_id": "default_credential",
+      "name": "Credential",
+      "type": "pattern",
+      "value": "credential",
+      "aliases": [
+        "credentials",
+        "憑證",
+        "認證資訊"
+      ],
+      "risk_level": "high",
+      "allowed_roles": [
+        "owner"
+      ],
+      "protection_modes": [
+        "exact_match",
+        "alias_match",
+        "case_insensitive_match"
+      ],
+      "enabled": true,
+      "description": "Generic credential information",
+      "source": "system"
+    },
+    {
+      "asset_id": "project_secret_001",
+      "name": "Project Codename",
+      "type": "exact",
+      "value": "Project-Shadow",
+      "aliases": [
+        "Shadow",
+        "影子專案"
+      ],
+      "risk_level": "high",
+      "allowed_roles": [
+        "owner"
+      ],
+      "protection_modes": [
+        "exact_match",
+        "partial_match",
+        "case_insensitive_match"
+      ],
+      "enabled": true,
+      "description": "Confidential project codename",
+      "source": "user"
+    },
+    {
+      "asset_id": "user_db_connection",
+      "name": "Database Connection String",
+      "type": "pattern",
+      "value": "localhost:5432",
+      "aliases": [
+        "db_host",
+        "database_url"
+      ],
+      "risk_level": "high",
+      "allowed_roles": [
+        "owner",
+        "admin"
+      ],
+      "protection_modes": [
+        "exact_match",
+        "partial_match",
+        "case_insensitive_match"
+      ],
+      "enabled": true,
+      "description": "Internal database connection endpoint",
+      "source": "user"
+    },
+    {
+      "asset_id": "user_deployment_key",
+      "name": "Deployment Key",
+      "type": "exact",
+      "value": "DEPLOY-KEY-2026-X9K2",
+      "aliases": [
+        "deploy_key",
+        "部署密鑰"
+      ],
+      "risk_level": "high",
+      "allowed_roles": [
+        "owner"
+      ],
+      "protection_modes": [
+        "exact_match",
+        "case_insensitive_match"
+      ],
+      "enabled": true,
+      "description": "CI/CD deployment key",
+      "source": "user"
+    },
+    {
+      "asset_id": "test_asset",
+      "name": "Test Asset",
+      "type": "exact",
+      "value": "test123",
+      "aliases": [
+        "test",
+        "testing"
+      ],
+      "risk_level": "high",
+      "allowed_roles": [
+        "owner"
+      ],
+      "protection_modes": [
+        "exact_match"
+      ],
+      "enabled": true,
+      "description": "",
+      "source": "user"
+    }
+  ]
+}
