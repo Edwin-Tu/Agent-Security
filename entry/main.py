@@ -9,24 +9,16 @@ if str(_root) not in sys.path:
 from config import Config
 from attack_classifier.attack_classifier import AttackClassifier
 from attack_classifier.attack_taxonomy import AttackTaxonomy
-from skill_router.skill_router import SkillRouter
-from input_guard.defense_context import DefenseContext
+from skill_router import SkillRouter, SkillRegistry, SkillAdapter, RoutingContext
+from attack_classifier.attack_classifier import AttackClassifier
+from attack_classifier.attack_taxonomy import AttackTaxonomy
 from risk_scoring.session_memory import SessionMemory
 from risk_scoring.risk_scoring_engine import RiskScoringEngine
 from policy_engine.defense_policy_engine import DefensePolicyEngine
 from asset_registry.protected_asset_registry import ProtectedAssetRegistry
-from policy_engine.policy_builder import PolicyBuilder
-from prompt_builder.protected_prompt_builder import ProtectedPromptBuilder
-from asset_registry.secret_matcher import SecretMatcher
 from leakage_verifier.leakage_verifier import LeakageVerifier
-from input_normalization.token_expander import TokenExpander
-from input_guard.input_guard import InputGuard
-from output_guard.output_guard import OutputGuard
-from prompt_builder.restricted_token_guard import RestrictedTokenGuard
-from input_guard.authorization_guard import AuthorizationGuard
 from llm_gateway.ollama_client import OllamaClient
 from runtime_monitor.runtime_guard import RuntimeGuard
-from runtime_monitor.interruption_handler import InterruptionHandler
 from defensive_skills.base_skill import BaseSkill
 
 
@@ -40,12 +32,15 @@ def print_banner():
 
 
 def init_skills() -> SkillRouter:
-    router = SkillRouter()
+    registry = SkillRegistry()
     for cls in BaseSkill.__subclasses__():
         try:
-            router.register(cls())
+            skill = cls()
+            adapter = SkillAdapter(skill)
+            registry.register(skill.name, adapter)
         except Exception:
             pass
+    router = SkillRouter(registry=registry)
     return router
 
 
@@ -99,8 +94,15 @@ def analyze_mode(cfg: Config):
         risk = risk_engine.compute(threats, assets, memory.get_history_texts())
         decision = policy_engine.decide(risk, {"accumulated_risk": memory.accumulated_risk})
         categories = [t["category"] for t in threats]
-        skill_results = router.process(text, categories, {"history": memory.get_history_texts()})
-        intercepted = any(sr["result"]["intervened"] for sr in skill_results)
+        ctx = RoutingContext(
+            prompt=text,
+            attack_categories=categories,
+            policy_action=decision["action"].upper() if decision["action"] else "WARN",
+            risk_score=risk.get("score", 0),
+            session_context={"history": memory.get_history_texts()},
+        )
+        route_result = router.route(ctx)
+        intercepted = any(r.get("detected") for r in route_result.skill_results)
         memory.record({"input": text, "blocked": intercepted, "analysis": {"threats": threats, "risk": risk, "decision": decision}})
         if decision["action"] == "block":
             memory.add_risk(3)
