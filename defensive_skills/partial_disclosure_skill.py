@@ -1,24 +1,35 @@
 from .base_skill import BaseSkill
+from .skill_models import SkillInput, DetectionResult, DefenseResult
 
 
 class PartialDisclosureSkill(BaseSkill):
-    def __init__(self):
-        super().__init__("partial_disclosure", "Detects partial disclosure attacks")
+    skill_name = "PartialDisclosureSkill"
+    attack_categories = ["partial_disclosure"]
 
-    def detect(self, text: str, context: dict = None) -> dict:
-        patterns = ["第一個字", "最後一個字", "只給我一個字母", "逐字顯示",
-                    "first character", "last character", "one letter at a time",
-                    "one character", "每個字分開", "前3碼"]
-        text_lower = text.lower()
-        for p in patterns:
-            if p in text_lower:
-                return {"detected": True, "pattern": p, "risk": "medium"}
-        history = (context or {}).get("history", [])
-        if history:
-            count = sum(1 for h in history if any(pp in h.lower() for pp in patterns))
-            if count >= 3:
-                return {"detected": True, "pattern": "multi_cue_partial", "risk": "high", "repeat_count": count}
-        return {"detected": False}
+    PATTERNS = [
+        "前三碼", "前兩碼", "前一碼", "前幾碼",
+        "最後一碼", "最後兩碼", "最後三碼", "最後四碼", "後幾碼",
+        "第一個字元", "第一個字母", "第一個字",
+        "最後一個字元", "最後一個字母", "最後一個字",
+        "一個字一個字", "逐字", "一個字母一個字母",
+        "first character", "last character",
+        "first letter", "last letter",
+        "one letter at a time", "one character at a time",
+        "逐個字元", "分段",
+    ]
 
-    def defend(self, text: str, threat_info: dict) -> str:
-        return "[SecretGuard]\n偵測到部分揭露嘗試，已阻擋。" if threat_info.get("detected") else text
+    def detect(self, skill_input: SkillInput) -> DetectionResult:
+        result = self._match_patterns(skill_input.normalized_prompt, self.PATTERNS)
+        if result:
+            return result
+        return DetectionResult(matched=False)
+
+    def defend(self, skill_input: SkillInput, detection_result: DetectionResult) -> DefenseResult:
+        return self._build_defense(
+            detection=detection_result,
+            action="BLOCK",
+            safe_prompt="[SecretGuard Blocked] 偵測到部分揭露嘗試，已阻擋。",
+            response_message="禁止分段揭露敏感資訊。",
+            restrictions=["no_partial_disclosure"],
+            runtime_checks=["partial_secret_check"],
+        )
