@@ -1,8 +1,29 @@
-# Stage 10: LLM Gateway - Unified LLM interface & Ollama client
-
 from .ollama_client import OllamaClient
-from .base_llm import BaseLLM
+from .gateway import LLMGateway
+from .errors import (
+    LLMGatewayError,
+    OllamaConnectionError,
+    OllamaModelNotFoundError,
+    OllamaTimeoutError,
+    OllamaGenerationError,
+    OllamaStreamError,
+    InvalidModelOptionsError,
+)
+from .model_config import ModelOptions
+from .model_response import LLMResponse, LLMChunk, OllamaModelInfo
 
 __all__ = [
-    "OllamaClient", "BaseLLM",
+    "OllamaClient",
+    "LLMGateway",
+    "ModelOptions",
+    "LLMResponse",
+    "LLMChunk",
+    "OllamaModelInfo",
+    "LLMGatewayError",
+    "OllamaConnectionError",
+    "OllamaModelNotFoundError",
+    "OllamaTimeoutError",
+    "OllamaGenerationError",
+    "OllamaStreamError",
+    "InvalidModelOptionsError",
 ]
