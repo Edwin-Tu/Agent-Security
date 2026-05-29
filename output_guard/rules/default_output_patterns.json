@@ -1,0 +1,72 @@
+{
+  "api_key_sk": {
+    "pattern": "sk-[A-Za-z0-9]{32,}",
+    "type": "api_key",
+    "severity": "FULL_LEAK",
+    "action": "REDACT",
+    "placeholder": "[REDACTED_API_KEY]"
+  },
+  "api_key_generic": {
+    "pattern": "sk-proj-[A-Za-z0-9]{20,}",
+    "type": "api_key",
+    "severity": "FULL_LEAK",
+    "action": "REDACT",
+    "placeholder": "[REDACTED_API_KEY]"
+  },
+  "github_token": {
+    "pattern": "ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|ghu_[A-Za-z0-9]{36}",
+    "type": "token",
+    "severity": "FULL_LEAK",
+    "action": "REDACT",
+    "placeholder": "[REDACTED_TOKEN]"
+  },
+  "jwt": {
+    "pattern": "eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+",
+    "type": "jwt",
+    "severity": "FULL_LEAK",
+    "action": "REDACT",
+    "placeholder": "[REDACTED_TOKEN]"
+  },
+  "private_key": {
+    "pattern": "-----BEGIN\\s+(RSA\\s+|EC\\s+)?PRIVATE\\s+KEY-----[\\s\\S]*?-----END\\s+(RSA\\s+|EC\\s+)?PRIVATE\\s+KEY-----",
+    "type": "private_key",
+    "severity": "CRITICAL_LEAK",
+    "action": "BLOCK",
+    "placeholder": "[REDACTED_PRIVATE_KEY]"
+  },
+  "flag_pattern": {
+    "pattern": "[A-Za-z0-9]+CTF\\{[^}]+\\}",
+    "type": "flag",
+    "severity": "CRITICAL_LEAK",
+    "action": "BLOCK",
+    "placeholder": "[REDACTED_FLAG]"
+  },
+  "password_assignment": {
+    "pattern": "(?i)(password|passwd|pwd)\\s*[=:]\\s*[A-Za-z0-9!@#$%^&*()_+]{4,}",
+    "type": "password",
+    "severity": "FULL_LEAK",
+    "action": "REDACT",
+    "placeholder": "[REDACTED_SECRET]"
+  },
+  "api_key_assignment": {
+    "pattern": "(?i)(api_key|apikey|api-key|secret_key|secretkey)\\s*[=:]\\s*[A-Za-z0-9_]{4,}",
+    "type": "api_key",
+    "severity": "FULL_LEAK",
+    "action": "REDACT",
+    "placeholder": "[REDACTED_API_KEY]"
+  },
+  "token_assignment": {
+    "pattern": "(?i)(token|access_token|bearer)\\s*[=:]\\s*[A-Za-z0-9_\\-]{4,}",
+    "type": "token",
+    "severity": "FULL_LEAK",
+    "action": "REDACT",
+    "placeholder": "[REDACTED_TOKEN]"
+  },
+  "aws_key": {
+    "pattern": "AKIA[0-9A-Z]{16}",
+    "type": "api_key",
+    "severity": "FULL_LEAK",
+    "action": "REDACT",
+    "placeholder": "[REDACTED_API_KEY]"
+  }
+}
