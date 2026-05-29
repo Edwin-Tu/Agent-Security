@@ -21,6 +21,7 @@ from output_guard.output_guard import OutputGuard
 from leakage_verifier.leakage_verifier import LeakageVerifier
 from event_logger.event_logger import EventLogger
 from risk_scoring.session_memory import SessionMemory
+from leakage_verifier.leakage_types import SEVERITY_ORDER
 
 
 class SecretGuardPipeline:
@@ -114,26 +115,93 @@ class SecretGuardPipeline:
             action = decision.action.value if hasattr(decision.action, "value") else str(decision.action)
             result["policy_action"] = action
 
+            def build_event(extra: dict | None = None) -> dict:
+                extra = extra or {}
+                attack_type = threats[0]["category"] if threats else None
+                attack_category = attack_type or (cats[0] if cats else None)
+                matched_ids = [a.get("asset_id") for a in matched]
+                matched_patterns = [t.get("matched_pattern") for t in threats if t.get("matched_pattern")]
+                risk_factors = [f for f in getattr(risk, "risk_factors", []) if f and f != "unknown"] if risk else []
+
+                # leakage info
+                leakage_detected = False
+                leakage_type = None
+                leakage_level = 0
+                if "leak" in locals() and leak is not None:
+                    leakage_detected = leak.is_leak
+                    leakage_type = leak.leak_types[0] if leak.leak_types else None
+                    if leak.highest_severity:
+                        leakage_level = SEVERITY_ORDER.get(leak.highest_severity, 0)
+
+                metadata = {
+                    "llm_called": result.get("llm_called", False),
+                    "runtime_interrupted": result.get("runtime_interrupted", False),
+                    "output_guard_blocked": result.get("output_guard_blocked", False),
+                    "runtime_monitor_triggered": result.get("runtime_interrupted", False),
+                    "ollama_model": model or self.cfg.model,
+                }
+
+                input_summary = result.get("normalized_prompt", "")[:200]
+                output_summary = "response_generated"
+
+                # final response type resolution
+                final_response_type = "unknown"
+                if action == "BLOCK":
+                    final_response_type = "blocked_response"
+                    output_summary = "blocked_response_generated"
+                elif action == "AUTHORIZE" and not result.get("llm_called", False):
+                    final_response_type = "authorization_required"
+                    output_summary = "authorization_required_response"
+                elif result.get("runtime_interrupted"):
+                    final_response_type = "runtime_interrupted"
+                    output_summary = "runtime_interrupted_response"
+                elif result.get("output_guard_blocked") or (leakage_detected and leak.recommended_action == "block"):
+                    final_response_type = "redacted_response"
+                    output_summary = "redacted_response_generated"
+                elif result.get("llm_called") and not leakage_detected and not result.get("output_guard_blocked"):
+                    final_response_type = "safe_answer"
+                    output_summary = "safe_response_generated"
+
+                base = {
+                    "original_prompt": prompt,
+                    "normalized_prompt": result.get("normalized_prompt", ""),
+                    "attack_type": attack_type or "unknown",
+                    "attack_category": attack_category or "unknown",
+                    "matched_patterns": matched_patterns,
+                    "risk_score": getattr(risk, "risk_score", result.get("risk_score", 0)),
+                    "risk_level": getattr(risk, "risk_level", result.get("risk_level", "low")),
+                    "risk_factors": risk_factors,
+                    "session_risk_score": self.session.accumulated_risk,
+                    "policy_action": action,
+                    "policy_reason": getattr(decision, "reason", ""),
+                    "policy_rule_id": getattr(decision, "log_level", None),
+                    "enabled_skills": getattr(route_res, "executed_skills", []) if 'route_res' in locals() else [],
+                    "skill_results": getattr(route_res, "skill_results", []) if 'route_res' in locals() else [],
+                    "blocked": extra.get("blocked", result.get("blocked", False)),
+                    "leakage_detected": leakage_detected,
+                    "leakage_type": leakage_type,
+                    "leakage_level": leakage_level,
+                    "matched_asset_ids": matched_ids,
+                    "input_summary": input_summary,
+                    "output_summary": output_summary,
+                    "final_response_type": final_response_type,
+                    "metadata": metadata,
+                }
+                base.update(extra)
+                return base
+
+
             # Early block by policy or input guard
             if decision.should_block or ig.get("recommended_action") == "block_candidate":
                 result["blocked"] = True
                 result["block_reason"] = decision.reason
                 result["llm_called"] = False
-                # log event
-                event = {
-                    "original_prompt": prompt,
-                    "normalized_prompt": norm.normalized_text,
-                    "attack_categories": cats,
-                    "matched_assets": [a.get("asset_id") for a in matched],
-                    "risk_score": risk.risk_score,
-                    "risk_level": risk.risk_level,
-                    "policy_action": action,
-                    "enabled_skills": [],
-                    "llm_called": False,
-                    "runtime_interrupted": False,
-                }
-                self.event_logger.log_event(event)
+                # log event (enriched)
+                ev = build_event({"blocked": True})
+                self.event_logger.log_event(ev)
                 result["event_logged"] = True
+                result["output_summary"] = ev["output_summary"]
+                result["final_response_type"] = ev["final_response_type"]
                 # return safe response from policy
                 result["safe_output"] = decision.reason or self.cfg.rejection_message
                 return result
@@ -154,19 +222,11 @@ class SecretGuardPipeline:
             if route_res.blocked:
                 result["blocked"] = True
                 result["block_reason"] = "; ".join(route_res.reasons or [])
-                self.event_logger.log_event({
-                    "original_prompt": prompt,
-                    "normalized_prompt": norm.normalized_text,
-                    "attack_categories": cats,
-                    "matched_assets": [a.get("asset_id") for a in matched],
-                    "risk_score": risk.risk_score,
-                    "risk_level": risk.risk_level,
-                    "policy_action": action,
-                    "enabled_skills": route_res.executed_skills,
-                    "llm_called": False,
-                    "runtime_interrupted": False,
-                })
+                ev = build_event({"blocked": True})
+                self.event_logger.log_event(ev)
                 result["event_logged"] = True
+                result["output_summary"] = ev["output_summary"]
+                result["final_response_type"] = ev["final_response_type"]
                 result["safe_output"] = self.cfg.rejection_message
                 return result
 
@@ -191,24 +251,17 @@ class SecretGuardPipeline:
                 result["blocked"] = True
                 result["block_reason"] = token_res.get("reason")
                 result["llm_called"] = False
-                self.event_logger.log_event({
-                    "original_prompt": prompt,
-                    "normalized_prompt": norm.normalized_text,
-                    "attack_categories": cats,
-                    "matched_assets": [a.get("asset_id") for a in matched],
-                    "risk_score": risk.risk_score,
-                    "risk_level": risk.risk_level,
-                    "policy_action": action,
-                    "enabled_skills": route_res.executed_skills,
-                    "llm_called": False,
-                    "runtime_interrupted": False,
-                })
+                ev = build_event({"blocked": True})
+                self.event_logger.log_event(ev)
                 result["event_logged"] = True
+                result["output_summary"] = ev["output_summary"]
+                result["final_response_type"] = ev["final_response_type"]
                 result["safe_output"] = self.cfg.rejection_message
                 return result
 
             # 10. Call LLM (unless dry_run)
             final_output = ""
+            raw_output = ""
             runtime_interrupted = False
             runtime_reason = None
             if not dry_run:
@@ -232,6 +285,7 @@ class SecretGuardPipeline:
                             break
                     if not runtime_interrupted:
                         final_output = "".join(chunks)
+                    raw_output = "".join(chunks)
                     # additional safety: direct substring check against registry
                     if not runtime_interrupted:
                         for a in self.registry.get_all():
@@ -244,6 +298,7 @@ class SecretGuardPipeline:
                 else:
                     resp: LLMResponse = self.llm_client.generate(prompt=built.final_prompt, model=model or self.cfg.model, options=None)
                     final_output = resp.text if getattr(resp, "text", None) else ""
+                    raw_output = final_output
                 result["llm_called"] = True
             else:
                 # dry run: don't call LLM but use safe_response from builder
@@ -260,6 +315,9 @@ class SecretGuardPipeline:
                 if check.get("blocked"):
                     result["runtime_interrupted"] = True
                     result["runtime_interrupt_reason"] = check.get("reason")
+                    # preserve raw_output for leakage analysis
+                    if not raw_output:
+                        raw_output = final_output
                     final_output = handler2.build_safe_response(monitor2.inspect_buffer()) or self.cfg.rejection_message
 
             result["runtime_interrupted"] = runtime_interrupted or result.get("runtime_interrupted", False)
@@ -272,27 +330,19 @@ class SecretGuardPipeline:
             result["safe_output"] = out.safe_output
 
             # 13. Leakage verifier
-            leak = self.leakage_verifier.verify(out.safe_output, self.registry.get_all())
-            result["leakage_detected"] = leak.is_leak
+            # Use raw_output (original LLM output) for leakage analysis when available,
+            # otherwise analyze the post-processed safe_output.
+            leakage_input = raw_output if raw_output else out.safe_output
+            leak = self.leakage_verifier.verify(leakage_input, self.registry.get_all())
+            result["leakage_detected"] = out.leakage_detected or leak.is_leak
             result["leakage_type"] = leak.leak_types[0] if leak.leak_types else None
 
-            # 14. Event logging
-            event = {
-                "original_prompt": prompt,
-                "normalized_prompt": norm.normalized_text,
-                "attack_categories": cats,
-                "matched_assets": [a.get("asset_id") for a in matched],
-                "risk_score": risk.risk_score,
-                "risk_level": risk.risk_level,
-                "policy_action": action,
-                "enabled_skills": route_res.executed_skills,
-                "llm_called": result["llm_called"],
-                "runtime_interrupted": result["runtime_interrupted"],
-                "output_guard_blocked": result["output_guard_blocked"],
-                "leakage_detected": result["leakage_detected"],
-            }
-            self.event_logger.log_event(event)
+            # 14. Event logging (enriched)
+            ev = build_event({"blocked": False})
+            self.event_logger.log_event(ev)
             result["event_logged"] = True
+            result["output_summary"] = ev["output_summary"]
+            result["final_response_type"] = ev["final_response_type"]
 
             return result
 

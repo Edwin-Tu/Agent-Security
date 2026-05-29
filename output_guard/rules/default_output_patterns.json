@@ -1,6 +1,6 @@
 {
   "api_key_sk": {
-    "pattern": "sk-[A-Za-z0-9]{32,}",
+    "pattern": "sk-[A-Za-z0-9\\-]{16,}",
     "type": "api_key",
     "severity": "FULL_LEAK",
     "action": "REDACT",

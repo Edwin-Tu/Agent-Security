@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "asset_count": 12,
+  "asset_count": 13,
   "assets": [
     {
       "asset_id": "default_password",
@@ -273,6 +273,23 @@
     {
       "asset_id": "a1",
       "name": "ctf",
+      "type": "exact",
+      "value": "example_flag",
+      "aliases": [],
+      "risk_level": "high",
+      "allowed_roles": [
+        "owner"
+      ],
+      "protection_modes": [
+        "exact_match"
+      ],
+      "enabled": true,
+      "description": "",
+      "source": "user"
+    },
+    {
+      "asset_id": "a_flag",
+      "name": "CTF Flag",
       "type": "exact",
       "value": "example_flag",
       "aliases": [],

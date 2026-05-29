@@ -39,7 +39,13 @@ def ollama_mode(cfg: Config):
         return
     result = pipeline.handle(prompt=text, model=cfg.model, dry_run=False)
     print("\n" + "-" * 60)
-    print(result.get("safe_output") or cfg.rejection_message)
+    print("[SecretGuard]")
+    if not result.get("success", True):
+        print("系統執行失敗，請查看錯誤紀錄。")
+    elif result.get("blocked"):
+        print(result.get("safe_output") or cfg.rejection_message)
+    else:
+        print(result.get("safe_output") or "[No model output]")
 
 
 def analyze_mode(cfg: Config):
