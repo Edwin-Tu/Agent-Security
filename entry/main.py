@@ -7,19 +7,7 @@ if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
 from config import Config
-from attack_classifier.attack_classifier import AttackClassifier
-from attack_classifier.attack_taxonomy import AttackTaxonomy
-from skill_router import SkillRouter, SkillRegistry, SkillAdapter, RoutingContext
-from attack_classifier.attack_classifier import AttackClassifier
-from attack_classifier.attack_taxonomy import AttackTaxonomy
-from risk_scoring.session_memory import SessionMemory
-from risk_scoring.risk_scoring_engine import RiskScoringEngine
-from policy_engine.defense_policy_engine import DefensePolicyEngine
-from asset_registry.protected_asset_registry import ProtectedAssetRegistry
-from leakage_verifier.leakage_verifier import LeakageVerifier
-from llm_gateway.ollama_client import OllamaClient
-from runtime_monitor.runtime_guard import RuntimeGuard
-from defensive_skills.base_skill import BaseSkill
+from entry.secretguard_pipeline import SecretGuardPipeline
 
 
 def print_banner():
@@ -45,80 +33,23 @@ def init_skills() -> SkillRouter:
 
 
 def ollama_mode(cfg: Config):
-    print("Ollama Integration Mode\n")
-    client = OllamaClient(ollama_url=cfg.ollama_url, model=cfg.model)
-    print("Checking Ollama service...")
-    if not client.is_available():
-        print("Ollama service is not available (ollama serve)\n")
-        return
-    model = cfg.model
-    models = client.list_models()
-    if models and model not in models:
-        model = models[0]
-        print(f"Using model: {model}")
-    client.model = model
+    pipeline = SecretGuardPipeline(cfg)
     text = input("\nEnter prompt:\n> ")
     if not text.strip():
         return
-    rt_guard = RuntimeGuard()
-    result = client.generate(prompt=text, restricted_tokens=[])
+    result = pipeline.handle(prompt=text, model=cfg.model, dry_run=False)
     print("\n" + "-" * 60)
-    if not result["success"]:
-        print(f"Error: {result['reason']}")
-    elif result["blocked"]:
-        print(cfg.rejection_message)
-        print(f"Blocked tokens: {', '.join(result['matched_tokens'])}")
-    else:
-        print(f"Safe output:\n{result['output']}")
-    print()
+    print(result.get("safe_output") or cfg.rejection_message)
 
 
 def analyze_mode(cfg: Config):
-    print("Multi-Layer Analysis Mode\n")
-    router = init_skills()
-    taxonomy = AttackTaxonomy()
-    classifier = AttackClassifier()
-    registry = ProtectedAssetRegistry()
-    risk_engine = RiskScoringEngine()
-    policy_engine = DefensePolicyEngine(threshold=cfg.threshold)
-    leaker = LeakageVerifier()
-    memory = SessionMemory()
-    print(f"Loaded {len(taxonomy.all())} attack patterns, {len(registry.get_all())} protected assets, {len(BaseSkill.__subclasses__())} skills\n")
+    pipeline = SecretGuardPipeline(cfg)
     while True:
         text = input("Enter text to analyze (or 'quit'):\n> ")
         if text.lower() in ("quit", "exit", "q"):
             break
-        threats = classifier.classify_with_context(text, memory.get_history_texts())
-        assets_result = registry.match(text)
-        assets = assets_result.get("matches", []) if assets_result.get("matched") else []
-        risk = risk_engine.compute(threats, assets, memory.get_history_texts())
-        decision = policy_engine.decide(risk, {"accumulated_risk": memory.accumulated_risk})
-        categories = [t["category"] for t in threats]
-        ctx = RoutingContext(
-            prompt=text,
-            attack_categories=categories,
-            policy_action=decision["action"].upper() if decision["action"] else "WARN",
-            risk_score=risk.get("score", 0),
-            session_context={"history": memory.get_history_texts()},
-        )
-        route_result = router.route(ctx)
-        intercepted = any(r.get("detected") for r in route_result.skill_results)
-        memory.record({"input": text, "blocked": intercepted, "analysis": {"threats": threats, "risk": risk, "decision": decision}})
-        if decision["action"] == "block":
-            memory.add_risk(3)
-        elif decision["action"] in ("warn", "restrict"):
-            memory.add_risk(1)
-
-        print(f"\n  Threats: {[t['category'] for t in threats] or 'none'}")
-        if assets:
-            print("  [Protected Assets Detected]")
-            for asset in assets:
-                print(f"    - {asset.get('asset_id')} | {asset.get('name')} | risk={asset.get('risk_level')} | fragments={asset.get('matched_fragments')}")
-        print(f"  Assets matched: {len(assets)}")
-        print(f"  Risk: {risk['level']} ({risk['score']})")
-        print(f"  Decision: {decision['action']}")
-        print(f"  Skills intervened: {intercepted}")
-        print(f"  Stats: {memory.stats()}\n")
+        result = pipeline.handle(prompt=text, model=None, dry_run=True)
+        print(result)
 
 
 def list_attacks_mode():
