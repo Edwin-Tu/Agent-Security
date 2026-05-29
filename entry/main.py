@@ -1,6 +1,7 @@
 import sys
 import argparse
 from pathlib import Path
+from skill_router.skill_router import SkillRouter
 
 _root = Path(__file__).resolve().parent.parent
 if str(_root) not in sys.path:
