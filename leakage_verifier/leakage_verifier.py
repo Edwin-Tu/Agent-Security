@@ -1,106 +1,85 @@
-import base64
+from .leakage_result import LeakageResult, LeakageMatch
+from .leakage_types import SEVERITY_ORDER, LEAK_SEVERITY_MAP, LEAK_ACTION_MAP, NO_LEAK
+from . import leakage_types as lt
+from .exact_leak_detector import ExactLeakDetector
+from .partial_leak_detector import PartialLeakDetector
+from .encoding_leak_detector import EncodingLeakDetector
+from .reconstruction_leak_detector import ReconstructionLeakDetector
+from .translation_leak_detector import TranslationLeakDetector
+from .semantic_leak_detector import SemanticLeakDetector
+from .redactor import Redactor
+
+
+MODE_DETECTOR_MAP = {
+    "exact_match": ExactLeakDetector,
+    "partial_match": PartialLeakDetector,
+    "encoding_match": EncodingLeakDetector,
+    "reconstruction_match": ReconstructionLeakDetector,
+    "translation_match": TranslationLeakDetector,
+    "semantic_match": SemanticLeakDetector,
+}
 
 
 class LeakageVerifier:
     def __init__(self):
-        self.detection_modes = [
-            "exact", "partial", "encoded", "translated", "reconstructed",
-        ]
+        self.redactor = Redactor()
 
-    def verify(self, output: str, assets: list[dict]) -> dict:
-        findings = []
-        for asset in assets:
-            value = asset.get("value", "")
-            aliases = asset.get("aliases", [])
-            modes = asset.get("protection_modes", self.detection_modes)
+    def verify(
+        self,
+        output_text: str,
+        protected_assets: list[dict],
+        policy_context: dict | None = None,
+        session_context: dict | None = None,
+    ) -> LeakageResult:
+        all_matches: list[LeakageMatch] = []
 
-            if "exact_match" in modes and value and value.lower() in output.lower():
-                findings.append({"asset": asset.get("name"), "mode": "exact", "severity": "high"})
+        for asset in protected_assets:
+            modes = asset.get("protection_modes", list(MODE_DETECTOR_MAP.keys()))
+            for mode in modes:
+                detector_cls = MODE_DETECTOR_MAP.get(mode)
+                if detector_cls is None:
+                    continue
+                detector = detector_cls()
+                try:
+                    matches = detector.detect(output_text, asset, session_context)
+                    all_matches.extend(matches)
+                except Exception:
+                    continue
 
-            if "partial_match" in modes and value:
-                partials = self._check_partial(output, value)
-                findings.extend(partials)
+        if not all_matches:
+            return LeakageResult(
+                is_leak=False,
+                highest_severity=lt.SEVERITY_NONE,
+                leak_types=[],
+                matches=[],
+                recommended_action=LEAK_ACTION_MAP[NO_LEAK],
+                redacted_output=output_text,
+            )
 
-            if "encoding_match" in modes and value:
-                encoded = self._check_encoded(output, value)
-                findings.extend(encoded)
+        leak_types = list(set(m.leak_type for m in all_matches))
+        highest_severity = max(
+            (m.severity for m in all_matches),
+            key=lambda s: SEVERITY_ORDER.get(s, 0),
+        )
 
-            if "reconstruction_match" in modes and value:
-                reconstructed = self._check_reconstruction(output, value)
-                findings.extend(reconstructed)
+        if lt.SEVERITY_CRITICAL in [m.severity for m in all_matches]:
+            recommended_action = "block"
+        elif lt.SEVERITY_HIGH in [m.severity for m in all_matches]:
+            recommended_action = "block"
+        else:
+            recommended_action = "redact"
 
-            if "semantic_match" in modes:
-                for alias in aliases:
-                    if alias.lower() in output.lower():
-                        findings.append({"asset": asset.get("name"), "mode": "semantic", "severity": "medium"})
+        redacted = output_text
+        for match in sorted(all_matches, key=lambda m: m.leak_type != lt.FULL_LEAK):
+            text_to_redact = match.matched_text or (match.matched_fragments[0] if match.matched_fragments else None)
+            if text_to_redact:
+                redacted = self.redactor.redact(redacted, text_to_redact, match.leak_type)
 
-        leaked = len(findings) > 0
-        return {
-            "leaked": leaked,
-            "findings": findings,
-            "leak_count": len(findings),
-            "max_severity": max((f.get("severity", "low") for f in findings), default="none"),
-        }
-
-    def verify_exact(self, output: str, secret: str) -> list[dict]:
-        findings = []
-        if secret and secret.lower() in output.lower():
-            findings.append({"mode": "exact", "severity": "high"})
-        return findings
-
-    def verify_partial(self, output: str, secret: str) -> list[dict]:
-        return self._check_partial(output, secret)
-
-    def verify_encoded(self, output: str, secret: str) -> list[dict]:
-        return self._check_encoded(output, secret)
-
-    def verify_translation(self, output: str, secret: str, translations: list[str]) -> list[dict]:
-        findings = []
-        output_lower = output.lower()
-        for t in translations:
-            if t.lower() in output_lower:
-                findings.append({"mode": "translation", "severity": "medium", "matched": t})
-        return findings
-
-    def verify_reconstruction(self, output: str, secret: str) -> list[dict]:
-        return self._check_reconstruction(output, secret)
-
-    def _check_partial(self, output: str, secret: str) -> list[dict]:
-        findings = []
-        secret_lower = secret.lower()
-        output_lower = output.lower()
-        words = secret_lower.split()
-        if len(words) > 1:
-            matched = sum(1 for w in words if w in output_lower)
-            if matched >= len(words) * 0.5:
-                findings.append({"asset": "partial", "mode": "partial", "severity": "medium"})
-        for i in range(3, len(secret_lower)):
-            fragment = secret_lower[i - 3:i + 1]
-            if fragment in output_lower:
-                findings.append({"asset": "partial_fragment", "mode": "partial", "severity": "low"})
-                break
-        return findings
-
-    def _check_encoded(self, output: str, secret: str) -> list[dict]:
-        findings = []
-        try:
-            b64 = base64.b64encode(secret.encode()).decode()
-            if b64 in output:
-                findings.append({"asset": "encoded", "mode": "encoded(base64)", "severity": "high"})
-        except Exception:
-            pass
-        hex_enc = secret.encode().hex()
-        if hex_enc in output:
-            findings.append({"asset": "encoded", "mode": "encoded(hex)", "severity": "high"})
-        return findings
-
-    def _check_reconstruction(self, output: str, secret: str) -> list[dict]:
-        findings = []
-        secret_lower = secret.lower().replace(" ", "")
-        output_clean = output.lower().replace(" ", "").replace("\n", "")
-        chars = sorted(set(secret_lower))
-        if len(chars) >= 3:
-            match_count = sum(1 for c in chars if c in output_clean)
-            if match_count >= len(chars) * 0.8:
-                findings.append({"asset": "reconstructed", "mode": "reconstruction", "severity": "high"})
-        return findings
+        return LeakageResult(
+            is_leak=True,
+            highest_severity=highest_severity,
+            leak_types=leak_types,
+            matches=all_matches,
+            recommended_action=recommended_action,
+            redacted_output=redacted,
+        )
