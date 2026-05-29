@@ -15,7 +15,33 @@ class StreamMonitor:
             output += chunk
             if len(output) > self.max_buffer:
                 output = output[-self.max_buffer:]
-            result = self.guard.detect(output)
-            if result["blocked"]:
-                return {"blocked": True, "output": "[SecretGuard]\n此內容受到限制，未經授權無法提供。", "matched_tokens": result["matched_tokens"], "reason": result["reason"]}
-        return {"blocked": False, "output": output, "matched_tokens": [], "reason": "Monitor passed."}
+
+            if hasattr(self.guard, "check_text"):
+                result = self.guard.check_text(output)
+            else:
+                result = self.guard.detect(output)
+
+            blocked = result.get("blocked", result.get("matched", False))
+            if blocked:
+                matched_token = result.get("matched_token", [])
+                matched_tokens = result.get("matched_tokens")
+                if matched_tokens is None:
+                    matched_tokens = [m.get("token", "") for m in matched_token if m.get("token")]
+
+                return {
+                    "blocked": True,
+                    "output": "[SecretGuard]\n此內容受到限制，未經授權無法提供。",
+                    "matched_tokens": matched_tokens,
+                    "matched_token": matched_token,
+                    "severity": result.get("severity", "high"),
+                    "reason": result.get("reason", "Restricted token matched."),
+                }
+
+        return {
+            "blocked": False,
+            "output": output,
+            "matched_tokens": [],
+            "matched_token": [],
+            "severity": "low",
+            "reason": "Monitor passed.",
+        }
