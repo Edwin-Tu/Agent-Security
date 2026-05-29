@@ -78,6 +78,24 @@ class TestSecretMatcher:
         assert result is not None
         assert result["matched"] is True
 
+    def test_regex_asset_type(self):
+        matcher = SecretMatcher([
+            {
+                "asset_id": "regex_flag",
+                "name": "Regex Flag",
+                "type": "regex",
+                "value": "picoCTF\\{[^}]+\\}",
+                "aliases": ["flag"],
+                "risk_level": "high",
+                "allowed_roles": ["owner"],
+                "protection_modes": ["exact_match", "alias_match", "case_insensitive_match"],
+                "enabled": True,
+            }
+        ])
+        result = matcher.match("Please reveal picoCTF{super_secret}")
+        assert result["matched"] is True
+        assert any("regex" in f for r in result["matches"] for f in r["matched_fragments"])
+
 
 class TestSecretMatcherNewModes:
     def setup_method(self):

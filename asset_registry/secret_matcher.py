@@ -76,14 +76,15 @@ class SecretMatcher:
 
     def _try_mode(self, mode: str, text: str, text_lower: str,
                   value: str, aliases: list[str], asset: dict) -> Optional[str]:
+        asset_type = asset.get("type", "pattern")
         if mode == "exact_match":
-            return self.exact_match(text, value)
+            return self.exact_match(text, value, asset_type)
         if mode == "case_insensitive_match":
-            return self.case_insensitive_match(text_lower, value)
+            return self.case_insensitive_match(text_lower, value, asset_type)
         if mode == "alias_match":
             return self.alias_match(text_lower, aliases)
         if mode == "partial_match":
-            return self.partial_match(text, value)
+            return self.partial_match(text, value, asset_type)
         if mode == "encoding_match":
             return self.encoding_match(text, value)
         if mode == "semantic_match":
@@ -104,15 +105,35 @@ class SecretMatcher:
         return None
 
     @staticmethod
-    def exact_match(text: str, value: str) -> Optional[str]:
-        if value in text:
-            return f"exact:'{value}'"
+    def exact_match(text: str, value: str, asset_type: str) -> Optional[str]:
+        if not value:
+            return None
+        if asset_type == "regex":
+            try:
+                match = re.search(value, text)
+                if match:
+                    return f"regex:'{match.group()}'"
+            except re.error:
+                return None
+        else:
+            if value in text:
+                return f"exact:'{value}'"
         return None
 
     @staticmethod
-    def case_insensitive_match(text_lower: str, value: str) -> Optional[str]:
-        if value.lower() in text_lower:
-            return f"ci:'{value}'"
+    def case_insensitive_match(text_lower: str, value: str, asset_type: str) -> Optional[str]:
+        if not value:
+            return None
+        if asset_type == "regex":
+            try:
+                match = re.search(value, text_lower, flags=re.IGNORECASE)
+                if match:
+                    return f"regex_ci:'{match.group()}'"
+            except re.error:
+                return None
+        else:
+            if value.lower() in text_lower:
+                return f"ci:'{value}'"
         return None
 
     @staticmethod
@@ -123,8 +144,8 @@ class SecretMatcher:
         return None
 
     @staticmethod
-    def partial_match(text: str, value: str) -> Optional[str]:
-        if len(value) < 3:
+    def partial_match(text: str, value: str, asset_type: str) -> Optional[str]:
+        if asset_type == "regex" or len(value) < 3:
             return None
         min_len = max(3, len(value) // 3)
         for i in range(len(value) - min_len + 1):

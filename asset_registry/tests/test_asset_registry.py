@@ -12,6 +12,17 @@ from asset_registry.protected_asset_registry import ProtectedAssetRegistry
 class TestProtectedAssetRegistry:
     def setup_method(self):
         self.reg = ProtectedAssetRegistry()
+        self._cleanup_ids = {
+            "pytest_test_001",
+            "dup_test",
+            "remove_test",
+            "update_test",
+            "save_test",
+        }
+
+    def teardown_method(self):
+        for asset_id in list(self._cleanup_ids):
+            self.reg.remove_asset(asset_id)
 
     def test_add_asset_success(self):
         result = self.reg.add_asset({
@@ -69,6 +80,22 @@ class TestProtectedAssetRegistry:
         assets = self.reg.get_all()
         assert isinstance(assets, list)
 
+    def test_load_default_assets(self):
+        defaults = self.reg.load_default_assets()
+        assert isinstance(defaults, list)
+        assert any(asset["asset_id"] == "default_password" for asset in defaults)
+
+    def test_load_user_assets(self):
+        users = self.reg.load_user_assets()
+        assert isinstance(users, list)
+        assert any(asset["asset_id"] == "project_secret_001" for asset in users)
+
+    def test_merge_assets(self):
+        merged = self.reg.merge_assets()
+        assert isinstance(merged, list)
+        assert any(asset["asset_id"] == "default_password" for asset in merged)
+        assert any(asset["asset_id"] == "project_secret_001" for asset in merged)
+
     def test_match_no_assets(self):
         reg = ProtectedAssetRegistry()
         reg.assets = []
@@ -76,7 +103,7 @@ class TestProtectedAssetRegistry:
         assert result["matched"] is False
 
     def test_add_asset_triggers_save(self):
-        path = Path(__file__).resolve().parent.parent / "policies" / "protected_assets.json"
+        path = Path(__file__).resolve().parent.parent.parent / "policies" / "protected_assets.json"
         before = path.stat().st_mtime if path.exists() else 0
         self.reg.add_asset({
             "asset_id": "save_test", "value": "check_save",
