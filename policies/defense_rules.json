@@ -1,14 +1,23 @@
 {
+  "ollama_url": "http://localhost:11434",
+  "model": "gemma3:12b",
+
   "default_threshold": "medium",
   "max_allowed_risk": "high",
+
   "enable_input_guard": true,
   "enable_output_guard": true,
   "enable_token_guard": true,
   "enable_authorization": false,
+
   "stream_monitoring": true,
   "log_all_events": true,
   "max_buffer_size": 1000,
+
   "response_language": "zh",
+
+  "rejection_message": "[SecretGuard]\n此內容受到限制，未經授權無法提供。",
+
   "defense_layers": [
     "input_normalization",
     "input_guard",
