@@ -8,13 +8,17 @@ if str(_root) not in sys.path:
 
 from config import Config
 from entry.secretguard_pipeline import SecretGuardPipeline
+from skill_router import SkillRouter, SkillRegistry, SkillAdapter
+from defensive_skills import BaseSkill
+from attack_classifier.attack_taxonomy import AttackTaxonomy
+from asset_registry.protected_asset_registry import ProtectedAssetRegistry
 
 
 def print_banner():
     print("\n" + "=" * 60)
     print("╔═══════════════════════════════════════════════════════════╗")
-    print("║       SecretGuard - Attack-Aware Defense Framework       ║")
-    print("║    Local LLM Runtime Protection System                  ║")
+    print("║       SecretGuard - Attack-Aware Defense Framework        ║")
+    print("║    Local LLM Runtime Protection System                    ║")
     print("╚═══════════════════════════════════════════════════════════╝")
     print("=" * 60 + "\n")
 
@@ -85,7 +89,6 @@ def benchmark_mode():
 
 
 def asset_mode(args):
-    from asset_registry.protected_asset_registry import ProtectedAssetRegistry
     import json
     reg = ProtectedAssetRegistry()
     if args.asset_cmd == "list":

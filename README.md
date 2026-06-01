@@ -1,293 +1,103 @@
 # SecretGuard
 
-## Attack-Aware Defensive Skill Framework for Local LLMs
-
-> 本地大型語言模型攻擊感知防禦技能框架  
-> Local LLM Runtime Defense Framework with Attack-aware Defensive Skills
-
----
-
-# 一、專案簡介
+## Local LLM Runtime Defense Framework
 
 SecretGuard 是一套針對本地大型語言模型（Local LLM）設計的攻擊感知防禦框架。
-
-核心概念不只是「阻擋敏感 token」，而是：
-
-> 讓使用者定義自己的受保護資產，系統再根據攻擊類型、風險分數與防護政策，動態掛載 Defensive Skills，防止模型在輸入、生成中與輸出後洩漏敏感資訊。
+它透過受保護資產定義、攻擊分類、風險評估、策略決策、技能路由、Prompt 綁定、Runtime 監控、輸出檢查與洩漏驗證，構成一個完整的防禦閉環。
 
 ---
 
-# 二、核心問題
+# 一、專案介紹
 
-單純依靠系統內建關鍵字並不足夠，因為每個使用者要保護的內容不同：
+SecretGuard 的核心目標是：
 
-- 比賽環境 → 保護 `flag`
-- 公司環境 → 保護客戶資料、報價、內部專案代號
-- 學校環境 → 保護學生資料、成績、內部文件
-- 開發環境 → 保護 API Key、Token、Private Key、系統提示詞
+- 讓使用者自定義受保護資產
+- 將攻擊分類與風險分數納入防禦決策
+- 在輸入、生成、輸出三個階段提供防護
+- 以結構化事件日誌記錄安全分析結果
 
-SecretGuard 透過 **Protected Asset Registry（受保護資產登錄表）** 讓使用者定義「什麼東西需要被防護」。
-
----
-
-# 三、研究目標
-
-- 建立 Prompt Injection 攻擊分類系統
-- 設計 20 種對應 Defensive Skills
-- 支援使用者自訂受保護資產
-- 根據資產、攻擊類型與風險分數進行防禦決策
-- 提供本地 LLM 即時防護能力
-- 防止完整洩漏、部分洩漏、編碼洩漏、翻譯洩漏與重構洩漏
-- 建立可擴充的 AI Security Framework
+這不只是單純的關鍵字封鎖，而是結合策略與技能的動態防禦系統。
 
 ---
 
-# 四、核心概念
+# 二、核心特性
 
-```text
-User Defined Protected Assets
-    ↓
-Attack Classification
-    ↓
-Risk Scoring
-    ↓
-Defense Policy Decision
-    ↓
-Defensive Skill Mounting
-    ↓
-Protected Prompt Building
-    ↓
-Runtime Monitoring
-    ↓
-Leakage Verification
-    ↓
-Safe Response
-```
+- **Protected Asset Registry**：可自訂資產、別名與保護模式
+- **Attack Classification**：辨識 prompt injection、社交工程、敏感請求等攻擊類型
+- **Risk Scoring**：根據攻擊類型、資產風險、歷史狀態計算風險分數
+- **Defense Policy Engine**：動態決定 ALLOW / WARN / REWRITE / RESTRICT / BLOCK / AUTHORIZE / ESCALATE
+- **Defensive Skill Router**：依攻擊類型啟動對應防禦技能
+- **Protected Prompt Builder**：將安全策略嵌入 prompt，降低 LLM 風險
+- **Runtime Monitor**：串流生成時即時截斷可疑輸出
+- **Output Guard**：輸出層過濾敏感模式並產生安全版本
+- **Leakage Verifier**：驗證完整、部分、編碼、翻譯、重構洩漏
+- **Event Logger**：記錄 risk、policy、asset、skill、leakage、blocked 等結果
 
 ---
 
-# 五、系統架構（流程節點式）
+# 三、系統流程
+
+SecretGuard 的防禦流程大致如下：
+
+1. 輸入正規化
+2. 受保護資產匹配
+3. 輸入層檢查
+4. 攻擊分類
+5. 風險計算
+6. 防禦政策決策
+7. 技能路由
+8. Prompt 安全化
+9. LLM 呼叫
+10. Runtime 監控
+11. 輸出防護
+12. 洩漏驗證
+13. 事件記錄
+
+這個流程可視為「攻擊感知 → 風險評估 → 策略決策 → 防禦執行 → 日誌追蹤」的完整循環。
+
+---
+
+# 四、專案結構
 
 ```text
 Agent-Security/
-│
-├── entry/                    # Stage 00: 系統入口與啟動流程
-│   └── main.py               # CLI 入口（Ollama / Analyze / List / Benchmark）
-│
-├── asset_registry/           # Stage 01: 受保護資產管理
-│   ├── protected_asset_registry.py  # 資產登錄與查詢
-│   ├── secret_matcher.py            # 機密值比對（完整/部分/編碼/別名）
-│   └── asset_loader.py              # JSON 資產載入與驗證
-│
-├── input_normalization/      # Stage 02: 輸入正規化
-│   ├── token_expander.py           # Token 同義詞擴展
-│   ├── token_risk_classifier.py    # Token 風險等級分類
-│   ├── unicode_normalizer.py       # Unicode 正規化（NFKC/全半形）
-│   └── homoglyph_normalizer.py     # 同形字符偵測與正規化
-│
-├── input_guard/              # Stage 03: 輸入層防護
-│   ├── input_guard.py              # XSS/可疑格式檢查
-│   ├── authorization_guard.py      # 角色與授權檢查
-│   └── defense_context.py          # 防禦上下文記錄
-│
-├── attack_classifier/        # Stage 04: 攻擊分類
-│   ├── attack_classifier.py        # 攻擊分類引擎
-│   ├── attack_taxonomy.py          # 攻擊分類查詢介面
-│   ├── attacks.json                # 20 種攻擊分類定義
-│   └── attack_patterns.json        # 攻擊模式比對規則
-│
-├── risk_scoring/             # Stage 05: 風險計算
-│   ├── risk_scoring_engine.py      # 單輪/多輪風險分數計算
-│   ├── session_memory.py           # 多輪對話記憶與統計
-│   └── token_risk_map.json         # Token 風險等級對照表
-│
-├── policy_engine/            # Stage 06: 防禦策略決策
-│   ├── defense_policy_engine.py    # 決定 allow/warn/restrict/block/escalate
-│   └── policy_builder.py           # 整合資產、角色與防禦策略
-│
-├── skill_router/             # Stage 07: 技能路由
-│   └── skill_router.py             # category → Defensive Skill 路由
-│
-├── defensive_skills/         # Stage 08: 20 種防禦技能
-│   ├── base_skill.py               # 抽象基底：detect() + defend() + process()
-│   ├── direct_request_skill.py
-│   ├── role_play_skill.py
-│   ├── instruction_override_skill.py
-│   ├── system_prompt_extraction_skill.py
-│   ├── encoding_bypass_skill.py
-│   ├── partial_disclosure_skill.py
-│   ├── translation_bypass_skill.py
-│   ├── structured_output_skill.py
-│   ├── log_access_skill.py
-│   ├── multi_turn_probe_skill.py
-│   ├── policy_confusion_skill.py
-│   ├── indirect_prompt_injection_skill.py
-│   ├── format_smuggling_skill.py
-│   ├── output_constraint_bypass_skill.py
-│   ├── reasoning_trap_skill.py
-│   ├── refusal_suppression_skill.py
-│   ├── persona_override_skill.py
-│   ├── data_reconstruction_skill.py
-│   ├── cross_language_injection_skill.py
-│   └── homoglyph_obfuscation_skill.py
-│
-├── prompt_builder/           # Stage 09: 安全 Prompt 建立
-│   ├── protected_prompt_builder.py # 產生安全化 Prompt
-│   └── restricted_token_guard.py   # 限制 Token 偵測
-│
-├── llm_gateway/              # Stage 10: LLM 連接層
-│   ├── base_llm.py                 # 統一 LLM 抽象介面
-│   └── ollama_client.py            # Ollama API 客戶端
-│
-├── runtime_monitor/          # Stage 11: Runtime 即時監控
-│   ├── stream_monitor.py           # 串流即時監控器
-│   ├── interruption_handler.py     # 中斷處理器
-│   └── runtime_guard.py            # Runtime 防護整合
-│
-├── output_guard/             # Stage 12: 輸出層防護
-│   └── output_guard.py             # 敏感模式過濾（secret/regex/semantic）
-│
-├── leakage_verifier/         # Stage 13: 洩漏驗證
-│   └── leakage_verifier.py         # 完整/部分/編碼/翻譯/重構/語意洩漏驗證
-│
-├── event_logger/             # Stage 14: 事件紀錄
-│   └── event_logger.py             # 結構化日誌、攻擊時間線、統計
-│
-├── benchmark/                # Stage 15: 基準測試
-│   ├── run_benchmark.py            # 測試執行器
-│   ├── evaluator.py                # 測試評估器
-│   ├── pipeline.py                 # 自動化測試管線
-│   └── results/                    # 測試結果
-│
-├── reports/                  # Stage 16: 報告產生
-│   └── report_generator.py         # JSON/HTML/Markdown 報告
-│
-├── policies/                 # 政策設定檔（JSON）
-├── data/                     # 資料目錄
-├── logs/                     # 日誌目錄
-├── config.py                 # 設定載入
-└── main.py                   # 相容性入口（委派至 entry/main.py）
+├── entry/                # 系統入口與 CLI
+├── asset_registry/       # 受保護資產管理
+├── input_normalization/  # 輸入正規化
+├── input_guard/          # 輸入防護
+├── attack_classifier/    # 攻擊分類
+├── risk_scoring/         # 風險評估
+├── policy_engine/        # 防禦策略
+├── skill_router/         # 技能路由
+├── defensive_skills/     # Defensive Skill 實作
+├── prompt_builder/       # 安全 Prompt 建置
+├── llm_gateway/          # LLM 連接層
+├── runtime_monitor/      # Runtime 監控
+├── output_guard/         # 輸出防護
+├── leakage_verifier/     # 洩漏驗證
+├── event_logger/         # 事件紀錄
+├── benchmark/            # 基準測試與評估
+├── reports/              # 報告生成
+├── policies/             # 規則設定
+├── logs/                 # 日誌輸出
+├── config.py             # 全域設定
+└── main.py               # 程式入口（呼叫 entry/main.py）
 ```
 
 ---
 
-# 六、完整系統流程
+# 五、快速開始
 
-```text
-User Prompt
-   ↓
-[Stage 01] Protected Asset Registry
-讀取系統預設與使用者自訂防護項目
-   ↓
-[Stage 02] Input Normalization
-大小寫、空白、Unicode 混淆字、同形字符、跨語言正規化
-   ↓
-[Stage 03] Input Guard
-XSS / 可疑格式 / 明顯敏感要求檢查
-   ↓
-[Stage 04] Attack Classifier
-比對攻擊模式，分類攻擊類型
-   ↓
-[Stage 05] Risk Scoring
-根據攻擊類型、資產風險、歷史對話計算風險分數
-   ↓
-[Stage 06] Policy Engine
-決定 allow / warn / rewrite / restrict / block / authorize / escalate
-   ↓
-[Stage 07] Skill Router
-依 category 路由至對應 Defensive Skill
-   ↓
-[Stage 08] Defensive Skill
-執行 detect() + defend()
-   ↓
-[Stage 09] Prompt Builder
-整合政策，產生安全化 Prompt + Token Guard
-   ↓
-[Stage 10] LLM Gateway
-發送請求至 Ollama 或其他 LLM
-   ↓
-[Stage 11] Runtime Monitor
-逐 chunk 即時監控，命中立即中斷
-   ↓
-[Stage 12] Output Guard
-輸出層過濾敏感模式
-   ↓
-[Stage 13] Leakage Verifier
-驗證完整/部分/編碼/翻譯/重構洩漏
-   ↓
-[Stage 14] Event Logger
-記錄攻擊類型、風險分數、啟用技能、政策動作、阻擋/洩漏狀態
-   ↓
-Final Safe Response
-```
-
----
-
-# 七、受保護資產登錄表
-
-## 7.1 系統預設防護項目
-
-```
-password, api_key, token, private_key, credential
-system_prompt, internal_rule, config, database, flag
-```
-
-## 7.2 使用者自訂範例
-
-```json
-{
-  "asset_id": "secret_001",
-  "name": "比賽 flag",
-  "type": "flag",
-  "value": "picoCTF{example_flag}",
-  "aliases": ["flag", "答案", "通關碼"],
-  "risk_level": "high",
-  "allowed_roles": ["owner"],
-  "protection_modes": [
-    "exact_match", "partial_match", "semantic_match",
-    "encoding_match", "translation_match", "reconstruction_match"
-  ]
-}
-```
-
-## 7.3 資產類型
-
-| 類型 | 說明 | 範例 |
-|------|------|------|
-| Exact Secret | 明確值 | flag、API key、密碼 |
-| Pattern Secret | 格式規則 | 身分證、Email、JWT |
-| Semantic Secret | 語意型機密 | 內部策略、客戶名單 |
-| Document Secret | 文件型機密 | 合約、報告 |
-| Derived Secret | 可推導出機密 | Base64、分段提示 |
-
----
-
-# 八、防禦動作分級
-
-```text
-ALLOW     允許回答，僅記錄事件
-WARN      允許回答，加入安全提醒與輸出檢查
-REWRITE   改寫 Prompt，移除或隔離惡意指令
-RESTRICT  限制模型只能回答非敏感部分
-BLOCK     直接阻擋請求
-AUTHORIZE 要求角色或權限驗證
-ESCALATE  提高 session risk，啟用更嚴格的 runtime monitor
-```
-
----
-
-# 九、快速開始
-
-## 安裝
+## 安裝依賴
 
 ```bash
 pip install requests
 ```
 
-## 執行
+## 執行方式
 
 ```bash
-# 互動選單
+# 互動式啟動
 python3 main.py
 
 # 多層分析模式（不需 Ollama）
@@ -302,46 +112,75 @@ python3 main.py --list-assets
 # 執行基準測試
 python3 main.py --benchmark
 
-# Ollama 即時防護（需先啟動 ollama serve）
+# Ollama 即時防護（須先啟動 ollama serve）
 python3 main.py --ollama
 ```
 
-## 自訂受保護資產
+## 開發測試
 
-編輯 `policies/user_secret_policy.json`，加入你想保護的資料。
-
-## 調整防禦規則
-
-編輯 `policies/defense_rules.json`，可設定：
-- `default_threshold`: 風險門檻（low / medium / high）
-- `model`: Ollama 模型名稱
-- `rejection_message`: 阻擋時的回覆訊息
+```bash
+pytest entry/tests -q
+pytest output_guard/tests -q
+pytest event_logger/tests -q
+pytest -q
+```
 
 ---
 
-# 十、技術規格
+# 六、配置說明
 
-| 項目 | 內容 |
-|---|---|
-| Language | Python 3.10+ |
-| Runtime | Ollama |
-| Detection | Attack-aware Pattern Matching |
-| Routing | SkillRouter — category → 20 Defensive Skills |
-| Protected Assets | System Default + User-defined Registry |
-| Input Guard | XSS / Suspicious Format Check |
-| Output Guard | Sensitive Pattern Filter |
-| Input Normalization | Unicode / Homoglyph / Full-width |
-| Token Guard | Restricted Token Detection |
-| Runtime Protection | Streaming Token Monitoring |
-| Defense Strategy | Policy-driven Skill-based Defense |
-| Leakage Verification | Exact / Partial / Encoding / Translation / Semantic |
-| Logging | JSONL with structured EventLogger |
-| Reporting | JSON / HTML / Markdown |
-| Architecture | Flow-node (16 stages) |
+## 受保護資產
+
+使用者可透過 `policies/user_secret_policy.json` 定義自訂資產，包含：
+
+- `asset_id`
+- `name`
+- `type`
+- `value`
+- `aliases`
+- `risk_level`
+- `allowed_roles`
+- `protection_modes`
+
+## 防禦策略
+
+在 `policies/defense_rules.json` 中調整：
+
+- `default_threshold`：風險分數門檻
+- `model`：Ollama 模型名稱
+- `rejection_message`：阻擋回應訊息
 
 ---
 
-# 十一、未來研究方向
+# 七、事件紀錄
+
+SecretGuard 會將防禦決策與偵測結果記錄為結構化事件，包含：
+
+- `attack_type`
+- `risk_score`
+- `risk_level`
+- `risk_factors`
+- `policy_action`
+- `blocked`
+- `matched_asset_ids`
+- `final_response_type`
+- `output_summary`
+- `metadata`
+
+這些事件可用於審計、報告與後續分析。
+
+---
+
+# 八、適用場景
+
+- 本地測試或研發環境的 LLM 防護
+- 企業內部敏感資料防洩漏
+- CTF / 比賽環境的 flag 防護
+- 具有自訂資產需求的語言模型防禦
+
+---
+
+# 九、未來方向
 
 1. **Token-level Logits Intervention** — 直接干涉下一個 token 預測
 2. **Embedding Similarity Detection** — 語意相似度偵測改寫攻擊
@@ -353,10 +192,10 @@ python3 main.py --ollama
 
 ---
 
-# 十二、專案定位
+# 十、專案定位
 
-SecretGuard 並非單純的 Keyword Blocklist，而是：
+SecretGuard 不是單純的 Blocklist，而是一套：
 
 > User-defined Protected Asset + Attack-aware Defensive Skill Framework
 
-一套完整 Local LLM Runtime Security Architecture，涵蓋資產定義、攻擊分類、風險決策、技能掛載、Runtime 監控與洩漏驗證的完整防禦閉環。
+它結合資產管理、攻擊分類、風險評估、策略路由、Runtime 監控與輸出檢查，打造可擴充的 Local LLM 防禦架構。
