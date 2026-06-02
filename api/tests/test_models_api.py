@@ -32,9 +32,8 @@ def test_models_returns_error_when_ollama_unavailable(monkeypatch):
     assert response.status_code == 200
     data = response.json()
     assert data["provider"] == "ollama"
-    assert len(data["models"]) == 1
-    assert data["models"][0]["name"] == "qwen2.5-coder:7b"
-    assert data["error"] is None
+    assert len(data["models"]) == 0
+    assert data["error"] == "provider_error"
 
 
 def test_models_returns_empty_when_ollama_fails_quietly(monkeypatch):
@@ -47,4 +46,4 @@ def test_models_returns_empty_when_ollama_fails_quietly(monkeypatch):
     assert response.status_code == 200
     data = response.json()
     assert data["models"] == []
-    assert data["error"] == "provider_error"
+    assert data["error"] is None

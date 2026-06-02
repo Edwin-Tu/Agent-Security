@@ -1,5 +1,6 @@
 import json
-from typing import Generator
+from collections.abc import Generator
+from typing import Any
 
 import httpx
 
@@ -11,27 +12,43 @@ GENERATE_TIMEOUT = 120
 
 
 class OllamaProvider(BaseLLMProvider):
-    def __init__(self, base_url: str = DEFAULT_BASE_URL, client: httpx.Client | None = None):
+    def __init__(
+        self,
+        base_url: str = DEFAULT_BASE_URL,
+        client: httpx.Client | None = None,
+    ):
         self.base_url = base_url.rstrip("/")
         self._client_instance = client
 
     def _get_client(self, timeout: int = CONNECT_TIMEOUT) -> httpx.Client:
         if self._client_instance is not None:
             return self._client_instance
-        return httpx.Client(base_url=self.base_url, timeout=httpx.Timeout(timeout, connect=CONNECT_TIMEOUT))
+        return httpx.Client(
+            base_url=self.base_url,
+            timeout=httpx.Timeout(timeout, connect=CONNECT_TIMEOUT),
+        )
 
-    def list_models(self) -> list[dict]:
+    def list_models(self) -> list[dict[str, Any]]:
         try:
             client = self._get_client()
             resp = client.get("/api/tags")
             resp.raise_for_status()
             data = resp.json()
             return [{"name": m["name"]} for m in data.get("models", [])]
-        except (httpx.HTTPError, httpx.TimeoutException) as e:
-            raise ProviderError(str(e))
+        except (httpx.HTTPError, httpx.TimeoutException) as exc:
+            raise ProviderError(str(exc)) from exc
 
-    def generate(self, model: str, prompt: str, options: dict | None = None) -> str:
-        payload: dict = {"model": model, "prompt": prompt, "stream": False}
+    def generate(
+        self,
+        model: str,
+        prompt: str,
+        options: dict[str, Any] | None = None,
+    ) -> str:
+        payload: dict[str, Any] = {
+            "model": model,
+            "prompt": prompt,
+            "stream": False,
+        }
         if options:
             payload["options"] = options
         try:
@@ -40,11 +57,20 @@ class OllamaProvider(BaseLLMProvider):
             resp.raise_for_status()
             data = resp.json()
             return data.get("response", "")
-        except (httpx.HTTPError, httpx.TimeoutException) as e:
-            raise ProviderError(str(e))
+        except (httpx.HTTPError, httpx.TimeoutException) as exc:
+            raise ProviderError(str(exc)) from exc
 
-    def stream_generate(self, model: str, prompt: str, options: dict | None = None) -> Generator[str, None, None]:
-        payload: dict = {"model": model, "prompt": prompt, "stream": True}
+    def stream_generate(
+        self,
+        model: str,
+        prompt: str,
+        options: dict[str, Any] | None = None,
+    ) -> Generator[str, None, None]:
+        payload: dict[str, Any] = {
+            "model": model,
+            "prompt": prompt,
+            "stream": True,
+        }
         if options:
             payload["options"] = options
         try:
@@ -56,12 +82,12 @@ class OllamaProvider(BaseLLMProvider):
                         continue
                     try:
                         data = json.loads(line)
-                        text = data.get("response", "")
-                        if text:
-                            yield text
-                        if data.get("done"):
-                            return
                     except json.JSONDecodeError:
                         continue
-        except (httpx.HTTPError, httpx.TimeoutException) as e:
-            raise ProviderError(str(e))
+                    text = data.get("response", "")
+                    if text:
+                        yield text
+                    if data.get("done"):
+                        return
+        except (httpx.HTTPError, httpx.TimeoutException) as exc:
+            raise ProviderError(str(exc)) from exc

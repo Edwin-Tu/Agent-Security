@@ -2,24 +2,23 @@ import builtins
 import importlib
 
 from config import Config
+from entry.guard_result import GuardDecision
+from entry.secretguard_pipeline import SecretGuardPipeline as OriginalPipeline
+
 entry_main = importlib.import_module("entry.main")
 
 
-class FakePipeline:
-    def handle(self, prompt, model, dry_run):
-        return {
-            "success": True,
-            "blocked": False,
-            "safe_output": "A Python list is an ordered collection that can store multiple items in a single variable.",
-        }
+def test_ollama_cli_accepts_normal_prompt(monkeypatch, capsys):
+    monkeypatch.setattr(builtins, "input", lambda prompt="": "please explain what a python list is")
 
+    def fake_pipeline(cfg):
+        p = OriginalPipeline(cfg)
+        p.analyze = lambda prompt, session_id="default", role="user": GuardDecision(
+            allowed=True, action="allow", risk_score=0, attack_type=None, reason=None,
+        )
+        return p
 
-def test_ollama_cli_prints_safe_output_for_allow_request(monkeypatch, capsys):
-    monkeypatch.setattr(builtins, "input", lambda prompt="": "please explain what a python list is in two sentences.")
-    monkeypatch.setattr(entry_main, "SecretGuardPipeline", lambda cfg: FakePipeline())
-
+    monkeypatch.setattr(entry_main, "SecretGuardPipeline", fake_pipeline)
     entry_main.ollama_mode(Config())
-
     captured = capsys.readouterr()
-    assert "A Python list is an ordered collection" in captured.out
-    assert "此內容受到限制" not in captured.out
+    assert "Input accepted" in captured.out

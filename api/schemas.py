@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -19,7 +21,7 @@ class AnalyzeResponse(BaseModel):
     risk_score: int
     attack_type: str | None = None
     reason: str | None = None
-    matched_assets: list[dict] = []
+    matched_assets: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ModelInfo(BaseModel):
@@ -28,7 +30,7 @@ class ModelInfo(BaseModel):
 
 class ModelsResponse(BaseModel):
     provider: str
-    models: list[ModelInfo]
+    models: list[ModelInfo] = Field(default_factory=list)
     error: str | None = None
     message: str | None = None
 
@@ -39,7 +41,7 @@ class ChatRequest(BaseModel):
     session_id: str = "default"
     role: str = "user"
     stream: bool = False
-    options: dict = {}
+    options: dict[str, Any] = Field(default_factory=dict)
 
 
 class ChatResponse(BaseModel):
