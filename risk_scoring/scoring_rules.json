@@ -1,0 +1,55 @@
+{
+  "attack_category_scores": {
+    "benign": 0,
+    "general_security_question": 10,
+    "direct_secret_request": 50,
+    "role_play_bypass": 45,
+    "instruction_override": 55,
+    "system_prompt_extraction": 60,
+    "encoding_bypass": 65,
+    "translation_bypass": 60,
+    "partial_disclosure": 70,
+    "multi_turn_probe": 75,
+    "data_reconstruction": 80,
+    "authorization_bypass": 85,
+    "unknown_suspicious": 40
+  },
+  "asset_risk_scores": {
+    "low": 10,
+    "medium": 20,
+    "high": 35,
+    "critical": 50
+  },
+  "match_type_scores": {
+    "exact_match": 40,
+    "alias_match": 25,
+    "partial_match": 35,
+    "encoding_match": 45,
+    "translation_match": 40,
+    "reconstruction_match": 50,
+    "semantic_match": 35,
+    "pattern_match": 30
+  },
+  "authorization_adjustments": {
+    "owner": -30,
+    "authorized": -20,
+    "unknown": 10,
+    "unauthorized": 40,
+    "role_claim_only": 30
+  },
+  "session_signal_scores": {
+    "repeated_secret_request": 20,
+    "repeated_partial_request": 30,
+    "previous_blocked_attempt": 25,
+    "language_switching_probe": 20,
+    "encoding_after_refusal": 30,
+    "session_marked_suspicious": 30
+  },
+  "thresholds": {
+    "low": [0, 19],
+    "moderate": [20, 39],
+    "medium": [40, 59],
+    "high": [60, 79],
+    "critical": [80, 100]
+  }
+}

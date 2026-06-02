@@ -1,0 +1,80 @@
+{
+  "direct_request": {
+    "primary_skill": "direct_request",
+    "secondary_skills": ["partial_disclosure"],
+    "priority": 90,
+    "min_policy_action": "RESTRICT"
+  },
+  "encoding_bypass": {
+    "primary_skill": "encoding_bypass",
+    "secondary_skills": ["data_reconstruction"],
+    "priority": 80,
+    "min_policy_action": "REWRITE"
+  },
+  "system_prompt_extraction": {
+    "primary_skill": "system_prompt_extraction",
+    "secondary_skills": ["instruction_override"],
+    "priority": 100,
+    "min_policy_action": "BLOCK"
+  },
+  "multi_turn_probe": {
+    "primary_skill": "multi_turn_probe",
+    "secondary_skills": ["partial_disclosure", "data_reconstruction"],
+    "priority": 85,
+    "min_policy_action": "ESCALATE"
+  },
+  "instruction_override": {
+    "primary_skill": "instruction_override",
+    "secondary_skills": [],
+    "priority": 95,
+    "min_policy_action": "RESTRICT"
+  },
+  "role_play": {
+    "primary_skill": "role_play",
+    "secondary_skills": [],
+    "priority": 70,
+    "min_policy_action": "RESTRICT"
+  },
+  "partial_disclosure": {
+    "primary_skill": "partial_disclosure",
+    "secondary_skills": [],
+    "priority": 70,
+    "min_policy_action": "RESTRICT"
+  },
+  "translation_bypass": {
+    "primary_skill": "translation_bypass",
+    "secondary_skills": [],
+    "priority": 65,
+    "min_policy_action": "REWRITE"
+  },
+  "refusal_suppression": {
+    "primary_skill": "refusal_suppression",
+    "secondary_skills": [],
+    "priority": 85,
+    "min_policy_action": "RESTRICT"
+  },
+  "output_constraint_bypass": {
+    "primary_skill": "output_constraint_bypass",
+    "secondary_skills": [],
+    "priority": 75,
+    "min_policy_action": "RESTRICT"
+  },
+  "policy_confusion": {
+    "primary_skill": "policy_confusion",
+    "secondary_skills": [],
+    "priority": 70,
+    "min_policy_action": "RESTRICT"
+  },
+  "data_reconstruction": {
+    "primary_skill": "data_reconstruction",
+    "secondary_skills": [],
+    "priority": 75,
+    "min_policy_action": "RESTRICT"
+  },
+  "format_smuggling": {
+    "primary_skill": "format_smuggling",
+    "secondary_skills": [],
+    "priority": 60,
+    "min_policy_action": "WARN"
+  }
+}

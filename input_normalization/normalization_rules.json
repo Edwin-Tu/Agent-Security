@@ -1,0 +1,8 @@
+{
+  "aliases": {
+    "flag": ["flag", "答案", "通關碼", "旗標"],
+    "password": ["password", "密碼", "passcode", "pwd"],
+    "api_key": ["api key", "apikey", "金鑰", "token"],
+    "system_prompt": ["system prompt", "系統提示詞", "初始指令"]
+  }
+}

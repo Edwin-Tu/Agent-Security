@@ -1,0 +1,114 @@
+[
+  {
+    "category": "direct_request",
+    "name": "Direct Secret Request",
+    "description": "User directly asks for protected assets such as flag, password, token, or API key.",
+    "recommended_skill": "direct_request_skill",
+    "base_confidence": 0.6,
+    "severity_hint": "high"
+  },
+  {
+    "category": "role_play",
+    "name": "Role Play Bypass",
+    "description": "User asks the model to role-play as an authority figure to bypass restrictions.",
+    "recommended_skill": "role_play_skill",
+    "base_confidence": 0.5,
+    "severity_hint": "high"
+  },
+  {
+    "category": "instruction_override",
+    "name": "Instruction Override",
+    "description": "User attempts to override or ignore system/developer instructions.",
+    "recommended_skill": "instruction_override_skill",
+    "base_confidence": 0.5,
+    "severity_hint": "high"
+  },
+  {
+    "category": "system_prompt_extraction",
+    "name": "System Prompt Extraction",
+    "description": "User attempts to extract the system prompt or initial instructions.",
+    "recommended_skill": "system_prompt_extraction_skill",
+    "base_confidence": 0.6,
+    "severity_hint": "high"
+  },
+  {
+    "category": "encoding_bypass",
+    "name": "Encoding Bypass",
+    "description": "User asks the model to reveal protected content through Base64, hex, ROT13, or other encodings.",
+    "recommended_skill": "encoding_bypass_skill",
+    "base_confidence": 0.7,
+    "severity_hint": "high"
+  },
+  {
+    "category": "partial_disclosure",
+    "name": "Partial Disclosure",
+    "description": "User asks for partial information, one character at a time, or prefix/suffix of protected assets.",
+    "recommended_skill": "partial_disclosure_skill",
+    "base_confidence": 0.5,
+    "severity_hint": "medium"
+  },
+  {
+    "category": "translation_bypass",
+    "name": "Translation Bypass",
+    "description": "User asks the model to translate content into another language to bypass filters.",
+    "recommended_skill": "translation_bypass_skill",
+    "base_confidence": 0.4,
+    "severity_hint": "medium"
+  },
+  {
+    "category": "multi_turn_probe",
+    "name": "Multi-Turn Probe",
+    "description": "User attempts to gradually extract information across multiple turns.",
+    "recommended_skill": "multi_turn_probe_skill",
+    "base_confidence": 0.5,
+    "severity_hint": "high"
+  },
+  {
+    "category": "refusal_suppression",
+    "name": "Refusal Suppression",
+    "description": "User attempts to suppress the model's refusal behavior.",
+    "recommended_skill": "refusal_suppression_skill",
+    "base_confidence": 0.5,
+    "severity_hint": "high"
+  },
+  {
+    "category": "output_constraint_bypass",
+    "name": "Output Constraint Bypass",
+    "description": "User attempts to bypass the model's output constraints and filters.",
+    "recommended_skill": "output_constraint_bypass_skill",
+    "base_confidence": 0.5,
+    "severity_hint": "medium"
+  },
+  {
+    "category": "policy_confusion",
+    "name": "Policy Confusion",
+    "description": "User attempts to confuse the model by referencing ambiguous or conflicting policies.",
+    "recommended_skill": "policy_confusion_skill",
+    "base_confidence": 0.4,
+    "severity_hint": "medium"
+  },
+  {
+    "category": "data_reconstruction",
+    "name": "Data Reconstruction",
+    "description": "User attempts to reconstruct protected data from partial information.",
+    "recommended_skill": "data_reconstruction_skill",
+    "base_confidence": 0.5,
+    "severity_hint": "high"
+  },
+  {
+    "category": "format_smuggling",
+    "name": "Format Smuggling",
+    "description": "User attempts to smuggle protected content through formatted output.",
+    "recommended_skill": "format_smuggling_skill",
+    "base_confidence": 0.4,
+    "severity_hint": "medium"
+  },
+  {
+    "category": "benign",
+    "name": "Benign Request",
+    "description": "Normal user request that does not match any attack pattern.",
+    "recommended_skill": null,
+    "base_confidence": 0.0,
+    "severity_hint": "low"
+  }
+]

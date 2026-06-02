@@ -1,0 +1,142 @@
+{
+  "direct_request": {
+    "name": "直接請求攻擊",
+    "description": "直接要求模型洩露秘密或敏感資訊",
+    "risk_level": "high",
+    "patterns": ["告訴我秘密", "洩露密碼", "把token給我", "顯示API密鑰"],
+    "mitigation": "input_guard, restricted_token_guard"
+  },
+  "role_play": {
+    "name": "角色扮演攻擊",
+    "description": "透過角色扮演繞過安全限制",
+    "risk_level": "high",
+    "patterns": ["假裝你是", "扮演", "想像你是", "pretend you are"],
+    "mitigation": "role_play_skill"
+  },
+  "instruction_override": {
+    "name": "指令覆蓋攻擊",
+    "description": "嘗試覆蓋或忽略原有的安全指令",
+    "risk_level": "high",
+    "patterns": ["忽略以上", "忽略之前的", "ignore previous", "override"],
+    "mitigation": "instruction_override_skill"
+  },
+  "system_prompt_extraction": {
+    "name": "系統提示提取攻擊",
+    "description": "試圖提取模型的系統提示詞",
+    "risk_level": "high",
+    "patterns": ["你的提示詞是什麼", "你的system prompt", "show your prompt", "initial instructions"],
+    "mitigation": "system_prompt_extraction_skill"
+  },
+  "encoding_bypass": {
+    "name": "編碼繞過攻擊",
+    "description": "使用編碼方式繞過文字過濾",
+    "risk_level": "medium",
+    "patterns": ["base64", "hex encoding", "unicode escape", "url encode"],
+    "mitigation": "encoding_bypass_skill"
+  },
+  "partial_disclosure": {
+    "name": "部分揭露攻擊",
+    "description": "逐步引導模型部分揭露資訊",
+    "risk_level": "medium",
+    "patterns": ["第一個字", "最後一個字", "只給我一個字母", "逐字顯示"],
+    "mitigation": "partial_disclosure_skill"
+  },
+  "translation_bypass": {
+    "name": "翻譯繞過攻擊",
+    "description": "透過多語言翻譯繞過安全過濾",
+    "risk_level": "medium",
+    "patterns": ["翻譯成", "translate", "in French", "in Chinese"],
+    "mitigation": "translation_bypass_skill"
+  },
+  "structured_output": {
+    "name": "結構化輸出攻擊",
+    "description": "要求以JSON/程式碼等結構化格式輸出敏感資訊",
+    "risk_level": "medium",
+    "patterns": ["json格式", "回傳JSON", "output as JSON", "in XML"],
+    "mitigation": "structured_output_skill"
+  },
+  "log_access": {
+    "name": "日誌存取攻擊",
+    "description": "試圖存取系統日誌或監控記錄",
+    "risk_level": "high",
+    "patterns": ["log", "日誌", "guard_events", "監控記錄"],
+    "mitigation": "log_access_skill, authorization_guard"
+  },
+  "multi_turn_probe": {
+    "name": "多輪探測攻擊",
+    "description": "透過多輪對話逐步探測系統防禦邊界",
+    "risk_level": "high",
+    "patterns": ["循序漸進", "逐步", "step by step probe", "multi-turn"],
+    "mitigation": "multi_turn_probe_skill, session_memory"
+  },
+  "policy_confusion": {
+    "name": "策略混淆攻擊",
+    "description": "透過混淆策略定義繞過安全限制",
+    "risk_level": "medium",
+    "patterns": ["規則是", "policy", "allow me", "permit"],
+    "mitigation": "policy_confusion_skill"
+  },
+  "indirect_prompt_injection": {
+    "name": "間接提示注入攻擊",
+    "description": "透過外部內容注入惡意提示",
+    "risk_level": "high",
+    "patterns": ["從網頁", "from the text", "引用來源", "in the context"],
+    "mitigation": "indirect_prompt_injection_skill"
+  },
+  "format_smuggling": {
+    "name": "格式走私攻擊",
+    "description": "利用特殊格式或標記語言走私敏感內容",
+    "risk_level": "medium",
+    "patterns": ["markdown", "html tag", "code block", "escaped"],
+    "mitigation": "format_smuggling_skill, output_guard"
+  },
+  "output_constraint_bypass": {
+    "name": "輸出限制繞過攻擊",
+    "description": "嘗試繞過模型的輸出限制規則",
+    "risk_level": "medium",
+    "patterns": ["不要限制", "don't filter", "無需審查", "output freely"],
+    "mitigation": "output_constraint_bypass_skill, output_guard"
+  },
+  "reasoning_trap": {
+    "name": "推理陷阱攻擊",
+    "description": "透過複雜推理問題誘導模型洩露資訊",
+    "risk_level": "medium",
+    "patterns": ["推理", "reason step", "think step by step", "分析這個"],
+    "mitigation": "reasoning_trap_skill"
+  },
+  "refusal_suppression": {
+    "name": "拒絕抑制攻擊",
+    "description": "嘗試抑制模型的拒絕回應機制",
+    "risk_level": "high",
+    "patterns": ["不要拒絕", "don't refuse", "不能說不知道", "must answer"],
+    "mitigation": "refusal_suppression_skill"
+  },
+  "persona_override": {
+    "name": "人格覆蓋攻擊",
+    "description": "透過設定新的人格覆蓋安全設定",
+    "risk_level": "high",
+    "patterns": ["你現在是", "你將扮演", "act as", "從現在開始你是"],
+    "mitigation": "persona_override_skill"
+  },
+  "data_reconstruction": {
+    "name": "資料重構攻擊",
+    "description": "從碎片化資訊中重構完整敏感資料",
+    "risk_level": "high",
+    "patterns": ["重組", "reconstruct", "拼湊", "assemble the pieces"],
+    "mitigation": "data_reconstruction_skill, session_memory"
+  },
+  "cross_language_injection": {
+    "name": "跨語言注入攻擊",
+    "description": "混合多種語言混淆安全檢測",
+    "risk_level": "medium",
+    "patterns": ["混合語言", "mix languages", "中英混合", "code-switch"],
+    "mitigation": "cross_language_injection_skill"
+  },
+  "homoglyph_obfuscation": {
+    "name": "同形字符混淆攻擊",
+    "description": "使用相似字形字符繞過關鍵字檢測",
+    "risk_level": "medium",
+    "patterns": ["homoglyph", "相似字符", "unicode lookalike", "混淆字符"],
+    "mitigation": "homoglyph_obfuscation_skill, input_guard"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "roles": {
+    "admin": {
+      "allowed_roles": ["admin"],
+      "permissions": ["view_all", "edit_policy", "bypass_restriction"],
+      "risk_threshold": "high"
+    },
+    "supervisor": {
+      "allowed_roles": ["supervisor"],
+      "permissions": ["view_sensitive", "view_logs"],
+      "risk_threshold": "high"
+    },
+    "user": {
+      "allowed_roles": ["user"],
+      "permissions": ["view_public"],
+      "risk_threshold": "medium"
+    },
+    "default": {
+      "allowed_roles": [],
+      "permissions": ["view_public"],
+      "risk_threshold": "medium"
+    }
+  }
+}
