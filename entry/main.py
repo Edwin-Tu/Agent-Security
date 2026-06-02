@@ -161,6 +161,10 @@ def main():
     parser.add_argument("--benchmark", action="store_true", help="Run benchmark")
 
     subparsers = parser.add_subparsers(dest="command")
+    serve_parser = subparsers.add_parser("serve", help="Start HTTP API server")
+    serve_parser.add_argument("--host", default="127.0.0.1", help="Bind address")
+    serve_parser.add_argument("--port", type=int, default=8765, help="Bind port")
+
     asset_parser = subparsers.add_parser("asset", help="Manage protected assets")
     asset_sub = asset_parser.add_subparsers(dest="asset_cmd")
 
@@ -178,6 +182,11 @@ def main():
     args = parser.parse_args()
 
     cfg = Config()
+
+    if args.command == "serve":
+        import uvicorn
+        uvicorn.run("api.server:app", host=args.host, port=args.port, reload=False)
+        return
 
     if args.command == "asset":
         print_banner()
