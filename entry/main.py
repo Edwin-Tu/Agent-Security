@@ -1,7 +1,7 @@
+import json
 import sys
 import argparse
 from pathlib import Path
-from skill_router.skill_router import SkillRouter
 
 _root = Path(__file__).resolve().parent.parent
 if str(_root) not in sys.path:
@@ -20,33 +20,18 @@ def print_banner():
     print("=" * 60 + "\n")
 
 
-def init_skills() -> SkillRouter:
-    registry = SkillRegistry()
-    for cls in BaseSkill.__subclasses__():
-        try:
-            skill = cls()
-            adapter = SkillAdapter(skill)
-            registry.register(skill.name, adapter)
-        except Exception:
-            pass
-    router = SkillRouter(registry=registry)
-    return router
-
-
 def ollama_mode(cfg: Config):
     pipeline = SecretGuardPipeline(cfg)
     text = input("\nEnter prompt:\n> ")
     if not text.strip():
         return
-    result = pipeline.handle(prompt=text, model=cfg.model, dry_run=False)
+    decision = pipeline.analyze(prompt=text)
     print("\n" + "-" * 60)
     print("[SecretGuard]")
-    if not result.get("success", True):
-        print("系統執行失敗，請查看錯誤紀錄。")
-    elif result.get("blocked"):
-        print(result.get("safe_output") or cfg.rejection_message)
+    if not decision.allowed or decision.action == "block":
+        print(cfg.rejection_message)
     else:
-        print(result.get("safe_output") or "[No model output]")
+        print("[Input accepted - risk score: %d, action: %s]" % (decision.risk_score, decision.action))
 
 
 def analyze_mode(cfg: Config):
@@ -55,11 +40,18 @@ def analyze_mode(cfg: Config):
         text = input("Enter text to analyze (or 'quit'):\n> ")
         if text.lower() in ("quit", "exit", "q"):
             break
-        result = pipeline.handle(prompt=text, model=None, dry_run=True)
-        print(result)
+        decision = pipeline.analyze(prompt=text)
+        print(json.dumps({
+            "allowed": decision.allowed,
+            "action": decision.action,
+            "risk_score": decision.risk_score,
+            "attack_type": decision.attack_type,
+            "reason": decision.reason,
+        }, indent=2))
 
 
 def list_attacks_mode():
+    from attack_classifier.attack_taxonomy import AttackTaxonomy
     print("Available Attack Patterns\n")
     taxonomy = AttackTaxonomy()
     for attack_id, config in taxonomy.all().items():
@@ -70,6 +62,7 @@ def list_attacks_mode():
 
 
 def list_assets_mode():
+    from asset_registry.protected_asset_registry import ProtectedAssetRegistry
     print("Protected Assets\n")
     registry = ProtectedAssetRegistry()
     for asset in registry.get_all():
@@ -87,7 +80,6 @@ def benchmark_mode():
 
 def asset_mode(args):
     from asset_registry.protected_asset_registry import ProtectedAssetRegistry
-    import json
     reg = ProtectedAssetRegistry()
     if args.asset_cmd == "list":
         assets = reg.list_assets()
@@ -161,6 +153,10 @@ def main():
     parser.add_argument("--benchmark", action="store_true", help="Run benchmark")
 
     subparsers = parser.add_subparsers(dest="command")
+    serve_parser = subparsers.add_parser("serve", help="Start HTTP API server")
+    serve_parser.add_argument("--host", default="127.0.0.1", help="Bind address")
+    serve_parser.add_argument("--port", type=int, default=8765, help="Bind port")
+
     asset_parser = subparsers.add_parser("asset", help="Manage protected assets")
     asset_sub = asset_parser.add_subparsers(dest="asset_cmd")
 
@@ -178,6 +174,11 @@ def main():
     args = parser.parse_args()
 
     cfg = Config()
+
+    if args.command == "serve":
+        import uvicorn
+        uvicorn.run("api.server:app", host=args.host, port=args.port, reload=False)
+        return
 
     if args.command == "asset":
         print_banner()
