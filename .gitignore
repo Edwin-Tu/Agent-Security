@@ -1,4 +1,5 @@
-__pycache__/
+**/__pycache__/
 *.py[cod]
 benchmark/results/*.json
 reports/*.json
+logs\guard_events.jsonl
