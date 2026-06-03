@@ -22,7 +22,7 @@ from entry.pipeline_context import PipelineContext
 from event_logger.event_logger import EventLogger
 
 SIMPLIFIED_RULES = [
-    (r"\bapi\s*key\b|\btoken\b|\bpassword\b|\bsecret\b|\bflag\b", "direct_secret_request", 80),
+    (r"\bapi\s*key\b|\btoken\b|\bpassword\b|\bsecret\b|\bflag\b", "asset_keyword_mention", 20),
     (r"\bsystem\s*prompt\b|\bdeveloper\s*message\b", "system_prompt_extraction", 75),
     (r"\bignore\s+previous\s+instructions?\b|\bignore\s+all\s+(above|prior)\b", "instruction_override", 75),
     (r"\bbase64\b|\bencode\b|\bdecode\b", "encoding_bypass", 60),

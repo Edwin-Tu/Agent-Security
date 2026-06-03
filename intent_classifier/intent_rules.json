@@ -18,6 +18,8 @@
       "什麼是.*意思", "解釋一下", "請說明",
       "是什麼", "用途",
       "什麼樣的",
+      "代表什麼", "什麼意思",
+      "為什麼",
       "安全", "安全性", "安全保存", "強密碼", "雜湊"
     ],
     "COMPARE": [
@@ -54,10 +56,12 @@
     "RECONSTRUCT": [
       "first.*char", "last.*char", "first.*character",
       "last.*character", "first letter", "first.*letter",
-      "prefix", "suffix",
+      "prefix", "suffix", "prefi",
       "reconstruct", "rebuild", "recover",
       "第.*[碼位]", "前.*[碼個位字符]", "前幾個",
-      "重建", "恢復", "重構"
+      "最後.*[碼個位字符]", "前綴", "後綴",
+      "重建", "恢復", "重構",
+      "長度", "多長", "幾個字元", "多少位"
     ],
     "TRANSFORM": [
       "encode", "decode", "base64", "encrypt", "decrypt",
@@ -108,6 +112,9 @@
       "why should",
       "什麼是", "是什麼", "解釋", "定義", "概念", "意思", "用途",
       "如何運作", "什麼樣的",
+      "有什麼不同", "差別", "區別", "差異",
+      "代表什麼", "什麼意思",
+      "為什麼",
       "安全", "安全性", "安全保存", "強密碼", "雜湊"
     ],
     "EXAMPLE_PLACEHOLDER": [
@@ -124,16 +131,16 @@
     "PARTIAL_VALUE": [
       "first.*char", "last.*char", "partial",
       "first letter", "first.*letter",
-      "部分", "前.*位", "前幾個"
+      "部分", "前.*位", "前幾個", "前.*碼"
     ],
     "CHAR_INDEX": [
       "position", "index", "character at",
       "last.*character", "last.*char",
-      "位置", "索引", "第.*位"
+      "位置", "索引", "第.*位", "第.*碼", "最後.*碼", "最後.*位", "最後.*字"
     ],
     "LENGTH_ONLY": [
       "length", "how long", "how many characters",
-      "長度", "多長", "多少位"
+      "長度", "多長", "多少位", "幾個字元", "幾個字符"
     ],
     "ENCODED_VALUE": [
       "encode", "base64", "encrypt", "\\bhash\\b", "hex",

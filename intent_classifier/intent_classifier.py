@@ -79,7 +79,7 @@ class IntentClassifier:
             Scope.USER_PROVIDED_TEXT, Scope.PROTECTED_REGISTRY,
             Scope.SESSION_HISTORY,
         }
-        if best_op in (Operation.EXPLAIN, Operation.HOW_TO, Operation.COMPARE):
+        if best_op in (Operation.EXPLAIN, Operation.HOW_TO, Operation.COMPARE, Operation.GENERATE_EXAMPLE):
             if scope in escalation_scopes:
                 if asset_reference_type != AssetReference.NO_ASSET_REFERENCE:
                     for high_op in ["BYPASS", "DISCLOSE", "EXTRACT", "RECONSTRUCT", "TRANSFORM"]:
@@ -126,6 +126,9 @@ class IntentClassifier:
             "why should",
             "什麼是", "是什麼", "解釋", "定義", "概念", "用途",
             "如何運作", "什麼樣的",
+            "有什麼不同", "差別", "區別", "差異",
+            "代表什麼", "什麼意思",
+            "為什麼",
         ]
         return any(re.search(p, text_lower) for p in patterns)
 

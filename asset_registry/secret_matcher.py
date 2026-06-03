@@ -145,6 +145,8 @@ class SecretMatcher:
                 return f"alias:'{alias}'"
         return None
 
+    _GENERIC_SHORT_WORDS = frozenset({"key", "api", "ssh", "rsa", "pwd"})
+
     @staticmethod
     def partial_match(text: str, value: str, asset_type: str) -> Optional[str]:
         if asset_type == "regex" or len(value) < 3:
@@ -153,6 +155,8 @@ class SecretMatcher:
         for i in range(len(value) - min_len + 1):
             segment = value[i:i + min_len]
             if segment.lower() in text.lower():
+                if len(value) >= 8 and len(segment) <= 3 and segment.lower() in SecretMatcher._GENERIC_SHORT_WORDS:
+                    continue
                 return f"partial:'{segment}'"
         return None
 
