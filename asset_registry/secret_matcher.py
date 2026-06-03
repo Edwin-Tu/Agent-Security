@@ -84,6 +84,8 @@ class SecretMatcher:
         if mode == "alias_match":
             return self.alias_match(text_lower, aliases)
         if mode == "partial_match":
+            if asset_type == "pattern":
+                return None
             return self.partial_match(text, value, asset_type)
         if mode == "encoding_match":
             return self.encoding_match(text, value)

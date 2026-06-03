@@ -99,6 +99,10 @@ class IntentClassifier:
             patterns = scope_patterns.get(s, [])
             for pattern in patterns:
                 if re.search(pattern, text_lower):
+                    if (s != Scope.GENERAL_CONCEPT
+                            and self._is_concept_question(text_lower)
+                            and self._is_generic_scope_keyword_only(text_lower, s)):
+                        return Scope.GENERAL_CONCEPT
                     return s
 
         if self._is_concept_question(text_lower):
@@ -106,11 +110,22 @@ class IntentClassifier:
 
         return Scope.UNKNOWN_INTERNAL
 
+    def _is_generic_scope_keyword_only(self, text_lower: str, scope: str) -> bool:
+        specific_patterns = {
+            "CURRENT_SYSTEM": [r"\byour\b"],
+            "HIDDEN_CONTEXT": [r"your\s+config", r"from\s+your", r"stored"],
+        }
+        patterns = specific_patterns.get(scope, [])
+        return not any(re.search(p, text_lower) for p in patterns)
+
     def _is_concept_question(self, text_lower: str) -> bool:
         patterns = [
             "what is", "what does", "what are", "explain", "define",
             "how do", "how to", "how can", "how should", "how does",
+            "what makes",
+            "why should",
             "什麼是", "是什麼", "解釋", "定義", "概念", "用途",
+            "如何運作", "什麼樣的",
         ]
         return any(re.search(p, text_lower) for p in patterns)
 

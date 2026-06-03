@@ -15,6 +15,7 @@ class TestSecretMatcher:
                 "asset_id": "test_flag",
                 "name": "Test Flag",
                 "value": "picoCTF{abc123}",
+                "type": "exact",
                 "aliases": ["flag", "答案"],
                 "risk_level": "high",
                 "allowed_roles": ["owner"],

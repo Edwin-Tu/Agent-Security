@@ -9,9 +9,16 @@
       "what is", "what does", "what are", "explain", "define",
       "what do you mean", "what does.*mean", "tell me about",
       "what is the definition", "what is meant by",
+      "what makes",
+      "why should",
+      "best practice",
+      "securely",
+      "safely",
       "什麼是", "解釋", "是什麼", "定義", "什麼意思",
       "什麼是.*意思", "解釋一下", "請說明",
-      "是什麼", "用途"
+      "是什麼", "用途",
+      "什麼樣的",
+      "安全", "安全性", "安全保存", "強密碼", "雜湊"
     ],
     "COMPARE": [
       "compare", "difference between", "vs", "versus",
@@ -20,9 +27,11 @@
     ],
     "HOW_TO": [
       "how to", "how do", "how can", "how would",
-      "how do i", "how should i", "how can i", "how would i",
+      "how do i", "how should", "how can i", "how would i",
+      "how to make", "how to create",
       "steps to", "way to", "guide to",
-      "如何", "怎麼", "怎樣", "如何做", "怎麼做"
+      "如何", "怎麼", "怎樣", "如何做", "怎麼做",
+      "如何安全", "怎麼安全", "如何運作"
     ],
     "GENERATE_EXAMPLE": [
       "example", "sample", "for instance",
@@ -34,7 +43,8 @@
       "leak", "send me", "provide me", "share",
       "print", "actual value",
       "告訴我", "給我", "顯示", "顯示出", "泄露",
-      "洩露", "提供", "分享", "交出"
+      "洩露", "提供", "分享", "交出",
+      "輸出", "揭露", "實際值", "真正"
     ],
     "EXTRACT": [
       "extract", "retrieve", "get", "obtain", "fetch",
@@ -46,12 +56,12 @@
       "last.*character", "first letter", "first.*letter",
       "prefix", "suffix",
       "reconstruct", "rebuild", "recover",
-      "第.*位", "前.*個", "前.*字符", "前幾個",
+      "第.*[碼位]", "前.*[碼個位字符]", "前幾個",
       "重建", "恢復", "重構"
     ],
     "TRANSFORM": [
       "encode", "decode", "base64", "encrypt", "decrypt",
-      "hash", "hex", "convert", "transform", "translate",
+      "\\bhash\\b", "hex", "convert", "transform", "translate",
       "json", "xml", "yaml", "format",
       "轉碼", "編碼", "解碼", "加密", "解密",
       "轉換", "翻譯", "編譯"
@@ -94,7 +104,11 @@
       "what is", "what does", "explain", "define",
       "what is the definition", "what is meant by",
       "how do", "how to", "how can", "how should", "how does",
-      "什麼是", "是什麼", "解釋", "定義", "概念", "意思", "用途"
+      "what makes",
+      "why should",
+      "什麼是", "是什麼", "解釋", "定義", "概念", "意思", "用途",
+      "如何運作", "什麼樣的",
+      "安全", "安全性", "安全保存", "強密碼", "雜湊"
     ],
     "EXAMPLE_PLACEHOLDER": [
       "example", "placeholder", "for example", "e\\.g\\.",
@@ -122,7 +136,7 @@
       "長度", "多長", "多少位"
     ],
     "ENCODED_VALUE": [
-      "encode", "base64", "encrypt", "hash", "hex",
+      "encode", "base64", "encrypt", "\\bhash\\b", "hex",
       "編碼", "加密", "base64"
     ],
     "TRANSLATED_VALUE": [

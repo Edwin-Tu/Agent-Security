@@ -233,7 +233,7 @@ class DefensePolicyEngine:
             ctx.operation in ("EXPLAIN", "COMPARE", "HOW_TO")
             and ctx.scope == "GENERAL_CONCEPT"
             and ctx.disclosure_mode == "NONE"
-            and ctx.asset_reference_type in ("no_asset_reference", "asset_type_mention", None)
+            and ctx.asset_reference_type in ("no_asset_reference", "asset_type_mention", "asset_alias_mention", None)
         )
 
     def _is_intent_disclosure_or_extraction(self, ctx: PolicyContext) -> bool:

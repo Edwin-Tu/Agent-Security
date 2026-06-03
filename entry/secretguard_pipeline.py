@@ -378,6 +378,7 @@ class SecretGuardPipeline:
 
         policy_assets = matched if not is_benign_intent else []
         policy_attack_category = effective_attack_type if not is_benign_intent else None
+        effective_asset_ref = "asset_type_mention" if is_benign_intent else intent_result.asset_reference_type
 
         policy_ctx = {
             "normalized_prompt": norm.normalized_text,
@@ -393,13 +394,13 @@ class SecretGuardPipeline:
             "operation": intent_result.operation,
             "scope": intent_result.scope,
             "disclosure_mode": intent_result.disclosure_mode,
-            "asset_reference_type": intent_result.asset_reference_type,
+            "asset_reference_type": effective_asset_ref,
         }
         decision = self.policy_engine.decide(policy_ctx)
         action = decision.action.value if hasattr(decision.action, "value") else str(decision.action)
 
         allowed = action.upper() in ("ALLOW", "WARN")
-        attack_type = effective_attack_type
+        attack_type = "benign" if is_benign_intent else effective_attack_type
         reason = decision.reason if hasattr(decision, "reason") else None
 
         log_api_event(
