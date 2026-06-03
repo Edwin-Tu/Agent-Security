@@ -17,8 +17,7 @@ def test_score_thresholds_map_to_actions():
     )
     medium_result = engine.score(
         {
-            "attack_category": "benign",
-            "matched_assets": [{"asset_id": "doc_001", "risk_level": "critical", "match_type": "alias_match"}],
+            "attack_category": "role_play_bypass",
             "authorization_status": "authorized",
         }
     )

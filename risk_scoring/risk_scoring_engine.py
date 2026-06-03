@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from .risk_score_result import RiskScoreResult
-from .score_calculator import ScoreCalculator
+from .score_calculator import ScoreCalculator, HIGH_RISK_GUARD_RULES
 from .session_risk_tracker import SessionRiskTracker
 
 
@@ -39,16 +39,29 @@ class RiskScoringEngine:
         triggered_rules = request_context.get("triggered_rules") or []
         authorization_status = request_context.get("authorization_status", "unknown")
         session_signals = request_context.get("session_signals") or []
+        is_attack = request_context.get("is_attack", False)
+        input_guard_should_block = request_context.get("input_guard_should_block", False)
+
+        is_attack = is_attack or self.calculator.is_high_risk_category(attack_category)
 
         attack_score = self.calculator.calculate_attack_score(attack_category)
-        asset_score = self.calculator.calculate_asset_score(matched_assets)
+        asset_score = self.calculator.calculate_asset_score(matched_assets, attack_category, is_attack)
         match_type_score = self.calculator.calculate_match_type_score(matched_assets)
-        authorization_adjustment = self.calculator.calculate_authorization_adjustment(authorization_status)
+        authorization_adjustment = self.calculator.calculate_authorization_adjustment(authorization_status, attack_category, is_attack)
         session_tracker = SessionRiskTracker(session_signals, self.rules)
         session_score = session_tracker.calculate_score()
 
         raw_score = attack_score + asset_score + match_type_score + authorization_adjustment + session_score
-        risk_score = max(0, min(raw_score, 100))
+        clamped_score = self.calculator.clamp_score_to_category(raw_score, attack_category)
+        risk_score = max(0, min(clamped_score, 100))
+
+        has_guard_override = (
+            input_guard_should_block
+            and any(r in HIGH_RISK_GUARD_RULES for r in triggered_rules)
+        )
+        if has_guard_override and attack_category in ("benign", None) and not is_attack:
+            risk_score = max(risk_score, 75)
+
         risk_level = self._get_risk_level(risk_score)
         recommended_action = self._get_recommended_action(risk_level)
 
@@ -67,6 +80,8 @@ class RiskScoringEngine:
             risk_score, matched_assets, session_signals
         )
 
+        if has_guard_override and risk_score >= 75:
+            risk_factors.append("input_guard_override")
         if self.fallback_to_default_rules:
             risk_factors.append("fallback_to_default_rules")
 
