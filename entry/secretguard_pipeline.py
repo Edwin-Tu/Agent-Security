@@ -7,6 +7,7 @@ from input_normalization.input_normalizer import normalize_input
 from asset_registry.protected_asset_registry import ProtectedAssetRegistry
 from input_guard.input_guard import InputGuard
 from attack_classifier.attack_classifier import AttackClassifier
+from intent_classifier.intent_classifier import IntentClassifier
 from risk_scoring.risk_scoring_engine import RiskScoringEngine
 from policy_engine.defense_policy_engine import DefensePolicyEngine
 from prompt_builder.protected_prompt_builder import ProtectedPromptBuilder
@@ -34,6 +35,7 @@ class SecretGuardPipeline:
         self.registry = ProtectedAssetRegistry()
         self.input_guard = InputGuard()
         self.classifier = AttackClassifier()
+        self.intent_classifier = IntentClassifier()
         self.risk_engine = RiskScoringEngine()
         self.policy_engine = DefensePolicyEngine(threshold=self.cfg.threshold)
         self.event_logger = EventLogger()
@@ -331,7 +333,23 @@ class SecretGuardPipeline:
         threats = self.classifier.classify_with_context(norm.normalized_text, [])
         cats = [t.get("category") for t in threats]
 
+        intent_result = self.intent_classifier.classify(
+            text=norm.normalized_text,
+            matched_assets=matched,
+            input_guard_flags=ig.get("matched_rules", []),
+            attack_categories=cats,
+            session_history=None,
+        )
+
         simplified_type, simplified_score = self._apply_simplified_rules(norm.normalized_text)
+
+        is_benign_intent = (
+            intent_result.operation in ("EXPLAIN", "HOW_TO", "COMPARE")
+            and intent_result.scope == "GENERAL_CONCEPT"
+            and intent_result.disclosure_mode == "NONE"
+        )
+        if is_benign_intent:
+            simplified_score = 0
 
         effective_attack_type = cats[0] if cats else simplified_type
         if simplified_type and simplified_type not in cats:
@@ -344,22 +362,38 @@ class SecretGuardPipeline:
             "triggered_rules": ig.get("matched_rules", []),
             "authorization_status": "unknown",
             "session_signals": [],
+            "operation": intent_result.operation,
+            "scope": intent_result.scope,
+            "disclosure_mode": intent_result.disclosure_mode,
+            "asset_reference_type": intent_result.asset_reference_type,
         }
         risk = self.risk_engine.score(request_ctx)
 
-        effective_risk_score = max(risk.risk_score, simplified_score)
+        if is_benign_intent:
+            effective_risk_score = min(risk.risk_score, 20)
+            effective_risk_level = "low"
+        else:
+            effective_risk_score = max(risk.risk_score, simplified_score)
+            effective_risk_level = risk.risk_level
+
+        policy_assets = matched if not is_benign_intent else []
+        policy_attack_category = effective_attack_type if not is_benign_intent else None
 
         policy_ctx = {
             "normalized_prompt": norm.normalized_text,
-            "attack_category": effective_attack_type,
+            "attack_category": policy_attack_category,
             "risk_score": effective_risk_score,
-            "risk_level": risk.risk_level,
-            "matched_assets": matched,
+            "risk_level": effective_risk_level,
+            "matched_assets": policy_assets,
             "user_role": role,
             "is_authorized": False,
             "session_risk_score": 0,
             "input_guard_flags": ig.get("matched_rules", []),
             "classifier_confidence": request_ctx["classifier_confidence"],
+            "operation": intent_result.operation,
+            "scope": intent_result.scope,
+            "disclosure_mode": intent_result.disclosure_mode,
+            "asset_reference_type": intent_result.asset_reference_type,
         }
         decision = self.policy_engine.decide(policy_ctx)
         action = decision.action.value if hasattr(decision.action, "value") else str(decision.action)
@@ -389,4 +423,5 @@ class SecretGuardPipeline:
             attack_type=attack_type,
             reason=reason,
             matched_assets=matched,
+            intent_result=intent_result.to_dict(),
         )

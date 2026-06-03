@@ -9,3 +9,4 @@ class GuardDecision:
     attack_type: str | None = None
     reason: str | None = None
     matched_assets: list[dict] = field(default_factory=list)
+    intent_result: dict | None = None

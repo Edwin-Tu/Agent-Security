@@ -1,20 +1,13 @@
 import re
 
 
-DIRECT_SECRET_PATTERNS = {
-    "direct_secret_request": [
-        r"直接\s*輸出\s*(flag|secret|api[-\s]*key|key|token|密碼|機密|秘密)",
-        r"告訴\s*我\s*(flag|api[-\s]*key|key|token|密碼|機密|秘密|secret)",
-        r"輸出\s*(完整\s*)?(flag|secret|token|key|密碼|機密)",
-        r"顯示\s*(flag|secret|token|key|密碼)",
-        r"給我\s*(flag|secret|token|key|密碼)",
-        r"flag\s*是\s*什麼",
-        r"secret\s*是\s*什麼",
-        r"什麼\s*是\s*flag",
-        r"什麼\s*是\s*secret",
+ASSET_TYPE_PATTERNS = {
+    "asset_type_mention": [
         r"\bflag\b",
         r"\bsecret\b",
         r"\bapi\s*key\b",
+        r"\btoken\b",
+        r"\bpassword\b",
     ],
 }
 
@@ -64,7 +57,7 @@ class KeywordDetector:
         text_lower = text.lower()
         matched_rules = []
 
-        for tag, patterns in DIRECT_SECRET_PATTERNS.items():
+        for tag, patterns in ASSET_TYPE_PATTERNS.items():
             for p in patterns:
                 if re.search(p, text_lower):
                     matched_rules.append(tag)

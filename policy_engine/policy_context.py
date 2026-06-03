@@ -15,3 +15,7 @@ class PolicyContext:
     input_guard_flags: List[str]
     classifier_confidence: float
     history_flags: List[str]
+    operation: Optional[str] = None
+    scope: Optional[str] = None
+    disclosure_mode: Optional[str] = None
+    asset_reference_type: Optional[str] = None

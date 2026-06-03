@@ -117,6 +117,10 @@ class DefensePolicyEngine:
                 input_guard_flags=context.get("input_guard_flags", []),
                 classifier_confidence=context.get("classifier_confidence", 0.0),
                 history_flags=context.get("history_flags", []),
+                operation=context.get("operation"),
+                scope=context.get("scope"),
+                disclosure_mode=context.get("disclosure_mode"),
+                asset_reference_type=context.get("asset_reference_type"),
             )
         if isinstance(context, dict) and runtime_context is not None:
             merged = {**runtime_context}
@@ -131,6 +135,10 @@ class DefensePolicyEngine:
             merged["input_guard_flags"] = merged.get("input_guard_flags", [])
             merged["classifier_confidence"] = merged.get("classifier_confidence", 0.0)
             merged["history_flags"] = merged.get("history_flags", [])
+            merged["operation"] = merged.get("operation")
+            merged["scope"] = merged.get("scope")
+            merged["disclosure_mode"] = merged.get("disclosure_mode")
+            merged["asset_reference_type"] = merged.get("asset_reference_type")
             return PolicyContext(
                 normalized_prompt=merged["normalized_prompt"],
                 attack_category=merged["attack_category"],
@@ -143,6 +151,10 @@ class DefensePolicyEngine:
                 input_guard_flags=merged["input_guard_flags"],
                 classifier_confidence=merged["classifier_confidence"],
                 history_flags=merged["history_flags"],
+                operation=merged["operation"],
+                scope=merged["scope"],
+                disclosure_mode=merged["disclosure_mode"],
+                asset_reference_type=merged["asset_reference_type"],
             )
         return PolicyContext(
             normalized_prompt="",
@@ -159,6 +171,21 @@ class DefensePolicyEngine:
         )
 
     def _derive_action(self, ctx: PolicyContext) -> PolicyAction:
+        if self._is_intent_benign_concept(ctx):
+            return PolicyAction.ALLOW
+
+        if self._is_intent_disclosure_or_extraction(ctx):
+            return PolicyAction.BLOCK
+
+        if self._is_intent_reconstruction(ctx):
+            return PolicyAction.BLOCK
+
+        if self._is_intent_transform(ctx):
+            return PolicyAction.BLOCK
+
+        if self._is_intent_bypass(ctx):
+            return PolicyAction.BLOCK if ctx.risk_score >= 40 else PolicyAction.RESTRICT
+
         if self._is_system_prompt_extraction(ctx):
             return PolicyAction.BLOCK
 
@@ -200,6 +227,38 @@ class DefensePolicyEngine:
             if low <= score <= high:
                 return action
         return PolicyAction.BLOCK
+
+    def _is_intent_benign_concept(self, ctx: PolicyContext) -> bool:
+        return (
+            ctx.operation in ("EXPLAIN", "COMPARE", "HOW_TO")
+            and ctx.scope == "GENERAL_CONCEPT"
+            and ctx.disclosure_mode == "NONE"
+            and ctx.asset_reference_type in ("no_asset_reference", "asset_type_mention", None)
+        )
+
+    def _is_intent_disclosure_or_extraction(self, ctx: PolicyContext) -> bool:
+        return (
+            ctx.operation in ("DISCLOSE", "EXTRACT")
+            and ctx.asset_reference_type not in (None, "no_asset_reference")
+            and ctx.scope in ("CURRENT_SYSTEM", "HIDDEN_CONTEXT", "PROTECTED_REGISTRY", "UNKNOWN_INTERNAL")
+        )
+
+    def _is_intent_reconstruction(self, ctx: PolicyContext) -> bool:
+        return (
+            ctx.operation == "RECONSTRUCT"
+            and ctx.disclosure_mode in ("PARTIAL_VALUE", "PREFIX_SUFFIX", "LENGTH_ONLY", "CHAR_INDEX", "RECONSTRUCTED_VALUE")
+            and ctx.asset_reference_type not in (None, "no_asset_reference")
+        )
+
+    def _is_intent_transform(self, ctx: PolicyContext) -> bool:
+        return (
+            ctx.operation == "TRANSFORM"
+            and ctx.disclosure_mode in ("ENCODED_VALUE", "TRANSLATED_VALUE", "STRUCTURED_OUTPUT")
+            and ctx.asset_reference_type not in (None, "no_asset_reference")
+        )
+
+    def _is_intent_bypass(self, ctx: PolicyContext) -> bool:
+        return ctx.operation == "BYPASS"
 
     def _is_system_prompt_extraction(self, ctx: PolicyContext) -> bool:
         return ctx.attack_category in SYSTEM_PROMPT_CATEGORIES
@@ -261,6 +320,12 @@ class DefensePolicyEngine:
 
     def _build_reason(self, ctx: PolicyContext, action: PolicyAction) -> str:
         parts = [f"Risk {ctx.risk_score}/{ctx.risk_level}", f"action={action.value.lower()}"]
+        if ctx.operation:
+            parts.append(f"op={ctx.operation}")
+        if ctx.scope:
+            parts.append(f"scope={ctx.scope}")
+        if ctx.disclosure_mode and ctx.disclosure_mode != "NONE":
+            parts.append(f"disclosure={ctx.disclosure_mode}")
         if ctx.attack_category:
             parts.append(f"attack={ctx.attack_category}")
         if self._is_unauthorized_asset_request(ctx):

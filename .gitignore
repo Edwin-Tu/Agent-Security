@@ -2,4 +2,4 @@
 *.py[cod]
 benchmark/results/*.json
 reports/*.json
-logs\guard_events.jsonl
+logs/guard_events.jsonl

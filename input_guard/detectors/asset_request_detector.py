@@ -13,8 +13,18 @@ ASSET_NAMES = {
     "credential": [r"credential", r"credentials", r"憑證", r"認證資訊"],
 }
 
+DISCLOSURE_PATTERNS = [
+    r"tell\s+me",
+    r"give\s+me",
+    r"show\s+me",
+    r"output",
+    r"(告訴|顯示|輸出|給)\s*我",
+    r"直接\s*輸出",
+]
+
 PARTIAL_DISCLOSURE_PATTERNS = [
     r"(前|頭|第[一二三四五六七八九十\d])\s*\d*\s*個\s*(字元|字|字符|字母|位)",
+    r"first\s+\d+\s*(char|chars|character|characters)",
     r"prefix",
     r"前綴",
     r"(只|僅)\s*(告訴|說|顯示|輸出|給)",
@@ -29,6 +39,7 @@ ENCODED_DISCLOSURE_PATTERNS = [
     r"用\s*(base64|hex)\s*(回答|輸出|回傳|顯示|列出|encode|編碼)",
     r"(encoded|encrypted|obfuscated)\s*(output|format|方式|格式)",
     r"編碼\s*(後|過)?\s*(輸出|回答|回傳|顯示)",
+    r"encode\s+.*in\s+base64",
 ]
 
 
@@ -49,16 +60,21 @@ class AssetRequestDetector:
                     break
 
         if detected_assets:
-            matched_rules.append("protected_asset_mention")
+            matched_rules.append("asset_type_mention")
+
+        for p in DISCLOSURE_PATTERNS:
+            if re.search(p, text_lower):
+                matched_rules.append("asset_disclosure_request")
+                break
 
         for p in PARTIAL_DISCLOSURE_PATTERNS:
             if re.search(p, text_lower):
-                matched_rules.append("partial_disclosure")
+                matched_rules.append("asset_partial_disclosure_request")
                 break
 
         for p in ENCODED_DISCLOSURE_PATTERNS:
             if re.search(p, text_lower):
-                matched_rules.append("encoded_disclosure")
+                matched_rules.append("asset_transform_request")
                 break
 
         return {

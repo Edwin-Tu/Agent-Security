@@ -10,6 +10,54 @@ from .score_calculator import ScoreCalculator
 from .session_risk_tracker import SessionRiskTracker
 
 
+INTENT_ASSET_SCORES = {
+    "no_asset_reference": 0,
+    "asset_type_mention": 5,
+    "asset_value_reference": 35,
+    "asset_alias_reference": 20,
+    "protected_registry_match": 50,
+}
+
+INTENT_OPERATION_SCORES = {
+    "EXPLAIN": -10,
+    "COMPARE": -5,
+    "HOW_TO": -5,
+    "GENERATE_EXAMPLE": 10,
+    "DISCLOSE": 60,
+    "EXTRACT": 70,
+    "RECONSTRUCT": 75,
+    "TRANSFORM": 75,
+    "BYPASS": 40,
+    "AUTHORIZE_CLAIM": 25,
+    "UNKNOWN": 0,
+}
+
+INTENT_SCOPE_SCORES = {
+    "GENERAL_CONCEPT": -15,
+    "EXAMPLE_PLACEHOLDER": -10,
+    "USER_PROVIDED_TEXT": 0,
+    "CURRENT_SYSTEM": 50,
+    "HIDDEN_CONTEXT": 60,
+    "PROTECTED_REGISTRY": 70,
+    "SESSION_HISTORY": 30,
+    "UNKNOWN_INTERNAL": 25,
+    "UNKNOWN": 0,
+}
+
+INTENT_DISCLOSURE_SCORES = {
+    "NONE": 0,
+    "FULL_VALUE": 60,
+    "PARTIAL_VALUE": 55,
+    "PREFIX_SUFFIX": 55,
+    "LENGTH_ONLY": 35,
+    "CHAR_INDEX": 60,
+    "ENCODED_VALUE": 65,
+    "TRANSLATED_VALUE": 65,
+    "STRUCTURED_OUTPUT": 35,
+    "RECONSTRUCTED_VALUE": 70,
+}
+
+
 class RiskScoringEngine:
     def __init__(self, rules_path: str | None = None):
         self.rules_path = rules_path
@@ -40,6 +88,8 @@ class RiskScoringEngine:
         authorization_status = request_context.get("authorization_status", "unknown")
         session_signals = request_context.get("session_signals") or []
 
+        intent_score = self._calculate_intent_score(request_context)
+
         attack_score = self.calculator.calculate_attack_score(attack_category)
         asset_score = self.calculator.calculate_asset_score(matched_assets)
         match_type_score = self.calculator.calculate_match_type_score(matched_assets)
@@ -47,7 +97,7 @@ class RiskScoringEngine:
         session_tracker = SessionRiskTracker(session_signals, self.rules)
         session_score = session_tracker.calculate_score()
 
-        raw_score = attack_score + asset_score + match_type_score + authorization_adjustment + session_score
+        raw_score = attack_score + asset_score + match_type_score + authorization_adjustment + session_score + intent_score
         risk_score = max(0, min(raw_score, 100))
         risk_level = self._get_risk_level(risk_score)
         recommended_action = self._get_recommended_action(risk_level)
@@ -82,6 +132,19 @@ class RiskScoringEngine:
             requires_authorization=requires_authorization,
             enable_strict_runtime_monitor=enable_strict_runtime_monitor,
         )
+
+    def _calculate_intent_score(self, request_context: dict) -> int:
+        asset_ref = request_context.get("asset_reference_type")
+        operation = request_context.get("operation")
+        scope = request_context.get("scope")
+        disclosure = request_context.get("disclosure_mode")
+
+        asset_part = INTENT_ASSET_SCORES.get(asset_ref, 0)
+        op_part = INTENT_OPERATION_SCORES.get(operation, 0)
+        scope_part = INTENT_SCOPE_SCORES.get(scope, 0)
+        disc_part = INTENT_DISCLOSURE_SCORES.get(disclosure, 0)
+
+        return asset_part + op_part + scope_part + disc_part
 
     def _get_risk_level(self, score: int) -> str:
         thresholds = self.rules.get("thresholds", {})

@@ -15,6 +15,17 @@ class AnalyzeRequest(BaseModel):
     role: str = "user"
 
 
+class IntentMetadata(BaseModel):
+    intent: str | None = None
+    operation: str | None = None
+    scope: str | None = None
+    disclosure_mode: str | None = None
+    asset_reference_type: str | None = None
+    intent_risk_score: int | None = None
+    confidence: float | None = None
+    reasons: list[str] = []
+
+
 class AnalyzeResponse(BaseModel):
     allowed: bool
     action: str
@@ -22,6 +33,7 @@ class AnalyzeResponse(BaseModel):
     attack_type: str | None = None
     reason: str | None = None
     matched_assets: list[dict[str, Any]] = Field(default_factory=list)
+    intent: IntentMetadata | None = None
 
 
 class ModelInfo(BaseModel):

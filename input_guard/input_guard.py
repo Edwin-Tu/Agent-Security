@@ -73,6 +73,10 @@ class InputGuard:
 
     def _compute_score(self, rules: list, assets: list, requires_auth: bool) -> int:
         scores = {
+            "asset_type_mention": 10,
+            "asset_disclosure_request": 30,
+            "asset_partial_disclosure_request": 35,
+            "asset_transform_request": 30,
             "direct_secret_request": 40,
             "instruction_override": 35,
             "system_prompt_probe": 30,

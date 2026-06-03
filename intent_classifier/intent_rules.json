@@ -1,0 +1,179 @@
+{
+  "operation_priority": [
+    "BYPASS", "EXTRACT", "RECONSTRUCT", "TRANSFORM",
+    "DISCLOSE", "AUTHORIZE_CLAIM", "GENERATE_EXAMPLE",
+    "HOW_TO", "COMPARE", "EXPLAIN", "UNKNOWN"
+  ],
+  "operation_patterns": {
+    "EXPLAIN": [
+      "what is", "what does", "what are", "explain", "define",
+      "what do you mean", "what does.*mean", "tell me about",
+      "what is the definition", "what is meant by",
+      "什麼是", "解釋", "是什麼", "定義", "什麼意思",
+      "什麼是.*意思", "解釋一下", "請說明",
+      "是什麼", "用途"
+    ],
+    "COMPARE": [
+      "compare", "difference between", "vs", "versus",
+      "what's the difference", "how is.*different",
+      "比較", "區別", "差異", "有什麼不同", "對比"
+    ],
+    "HOW_TO": [
+      "how to", "how do", "how can", "how would",
+      "how do i", "how should i", "how can i", "how would i",
+      "steps to", "way to", "guide to",
+      "如何", "怎麼", "怎樣", "如何做", "怎麼做"
+    ],
+    "GENERATE_EXAMPLE": [
+      "example", "sample", "for instance",
+      "give me an example", "show an example",
+      "舉例", "示例", "範例", "例子", "舉個例子"
+    ],
+    "DISCLOSE": [
+      "tell me", "give me", "show me", "reveal", "disclose",
+      "leak", "send me", "provide me", "share",
+      "print", "actual value",
+      "告訴我", "給我", "顯示", "顯示出", "泄露",
+      "洩露", "提供", "分享", "交出"
+    ],
+    "EXTRACT": [
+      "extract", "retrieve", "get", "obtain", "fetch",
+      "pull", "grab", "collect",
+      "提取", "獲取", "取得", "取出", "拉取"
+    ],
+    "RECONSTRUCT": [
+      "first.*char", "last.*char", "first.*character",
+      "last.*character", "first letter", "first.*letter",
+      "prefix", "suffix",
+      "reconstruct", "rebuild", "recover",
+      "第.*位", "前.*個", "前.*字符", "前幾個",
+      "重建", "恢復", "重構"
+    ],
+    "TRANSFORM": [
+      "encode", "decode", "base64", "encrypt", "decrypt",
+      "hash", "hex", "convert", "transform", "translate",
+      "json", "xml", "yaml", "format",
+      "轉碼", "編碼", "解碼", "加密", "解密",
+      "轉換", "翻譯", "編譯"
+    ],
+    "BYPASS": [
+      "ignore", "bypass", "disregard", "skip",
+      "pretend", "overlook", "override",
+      "繞過", "忽略", "跳過", "忽視"
+    ],
+    "AUTHORIZE_CLAIM": [
+      "i am", "i have permission", "i am authorized",
+      "i have the right", "i am allowed",
+      "我有權限", "我是", "我有權利", "我有資格"
+    ]
+  },
+  "scope_patterns": {
+    "SESSION_HISTORY": [
+      "previously", "before", "earlier", "last time",
+      "之前", "先前", "上次", "前面"
+    ],
+    "HIDDEN_CONTEXT": [
+      "in your", "from your",
+      "your config", "config file", "system config",
+      "hidden", "env", "environment"
+    ],
+    "USER_PROVIDED_TEXT": [
+      "my key", "my token", "my password", "my secret",
+      "my credential",
+      "我的密鑰", "我的密碼", "我的令牌"
+    ],
+    "PROTECTED_REGISTRY": [
+      "registry", "protected registry", "vault",
+      "註冊表", "保護", "保險庫"
+    ],
+    "CURRENT_SYSTEM": [
+      "your", "system", "this system",
+      "你的", "系統", "此系統"
+    ],
+    "GENERAL_CONCEPT": [
+      "what is", "what does", "explain", "define",
+      "what is the definition", "what is meant by",
+      "how do", "how to", "how can", "how should", "how does",
+      "什麼是", "是什麼", "解釋", "定義", "概念", "意思", "用途"
+    ],
+    "EXAMPLE_PLACEHOLDER": [
+      "example", "placeholder", "for example", "e\\.g\\.",
+      "acme", "your-", "sample",
+      "示例", "例如", "範例"
+    ]
+  },
+  "disclosure_patterns": {
+    "PREFIX_SUFFIX": [
+      "prefix", "suffix",
+      "前綴", "後綴"
+    ],
+    "PARTIAL_VALUE": [
+      "first.*char", "last.*char", "partial",
+      "first letter", "first.*letter",
+      "部分", "前.*位", "前幾個"
+    ],
+    "CHAR_INDEX": [
+      "position", "index", "character at",
+      "last.*character", "last.*char",
+      "位置", "索引", "第.*位"
+    ],
+    "LENGTH_ONLY": [
+      "length", "how long", "how many characters",
+      "長度", "多長", "多少位"
+    ],
+    "ENCODED_VALUE": [
+      "encode", "base64", "encrypt", "hash", "hex",
+      "編碼", "加密", "base64"
+    ],
+    "TRANSLATED_VALUE": [
+      "translate", "convert", "轉換", "翻譯"
+    ],
+    "STRUCTURED_OUTPUT": [
+      "json", "xml", "yaml", "format",
+      "structured", "organized"
+    ],
+    "RECONSTRUCTED_VALUE": [
+      "reconstruct", "rebuild", "recover", "assemble",
+      "重建", "恢復", "重組"
+    ],
+    "FULL_VALUE": [
+      "full", "complete", "exact", "actual",
+      "tell me", "give me", "reveal", "disclose",
+      "完整", "完整值", "全部", "確切的"
+    ]
+  },
+  "asset_terms": {
+    "api_key": ["api key", "apikey", "api_key", "api密鑰", "api令牌"],
+    "token": ["token", "令牌", "授權碼"],
+    "password": ["password", "passwd", "pwd", "密碼", "口令"],
+    "secret": ["secret", "機密", "秘鑰"],
+    "credential": ["credential", "credentials", "憑證", "憑據"],
+    "jwt": ["jwt", "json web token"],
+    "session": ["session", "session id", "會話"],
+    "access_key": ["access key", "access key id", "訪問密鑰", "存取金鑰"],
+    "private_key": ["private key", "私鑰", "私有密鑰"],
+    "auth_token": ["auth token", "auth_token", "authentication token", "認證令牌"],
+    "encryption_key": ["encryption key", "加密密鑰", "加密金鑰"]
+  },
+  "asset_value_patterns": [
+    "sk-[A-Za-z0-9]{20,}",
+    "-----BEGIN",
+    "picoCTF\\{",
+    "AKIA[A-Z0-9]{16}",
+    "FLAG\\{",
+    "flag\\{"
+  ],
+  "risk_weights": {
+    "EXPLAIN": 0,
+    "COMPARE": 5,
+    "HOW_TO": 5,
+    "GENERATE_EXAMPLE": 10,
+    "DISCLOSE": 90,
+    "EXTRACT": 80,
+    "RECONSTRUCT": 85,
+    "TRANSFORM": 75,
+    "BYPASS": 100,
+    "AUTHORIZE_CLAIM": 30,
+    "UNKNOWN": 20
+  }
+}
