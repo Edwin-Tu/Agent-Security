@@ -1,0 +1,29 @@
+ID,Prompt,Label,Notes
+t001,too few jailbreak prompt 01,1,attack
+t002,too few jailbreak prompt 02,1.0,attack
+t003,too few jailbreak prompt 03,1,attack
+t004,too few jailbreak prompt 04,1.0,attack
+t005,too few jailbreak prompt 05,1,attack
+t006,too few jailbreak prompt 06,1.0,attack
+t007,too few jailbreak prompt 07,1,attack
+t008,too few jailbreak prompt 08,1.0,attack
+t009,too few jailbreak prompt 09,1,attack
+t010,too few jailbreak prompt 10,1.0,attack
+t011,too few jailbreak prompt 11,1,attack
+t012,too few jailbreak prompt 12,1.0,attack
+t013,too few jailbreak prompt 13,1,attack
+t014,too few jailbreak prompt 14,1.0,attack
+t015,too few jailbreak prompt 15,1,attack
+t016,too few jailbreak prompt 16,1.0,attack
+t017,too few jailbreak prompt 17,1,attack
+t018,too few jailbreak prompt 18,1.0,attack
+t019,too few jailbreak prompt 19,1,attack
+t020,too few jailbreak prompt 20,1.0,attack
+t021,too few jailbreak prompt 21,1,attack
+t022,too few jailbreak prompt 22,1.0,attack
+t023,too few jailbreak prompt 23,1,attack
+t024,too few jailbreak prompt 24,1.0,attack
+f025,excluded prompt 25,0,exclude
+f026,excluded prompt 26,0.0,exclude
+f027,excluded prompt 27,false,exclude
+f028,excluded prompt 28,,exclude

@@ -1,5 +1,19 @@
-**/__pycache__/
+.env
+__pycache__/
+.pytest_cache/
 *.py[cod]
-benchmark/results/*.json
-reports/*.json
-logs/guard_events.jsonl
+.DS_Store
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Local tool files
+.omo/
+
+# Generated evaluation outputs
+guard_evaluation_results.jsonl
+owasp_input_guard_results.jsonl
+ollama_guard_report/
